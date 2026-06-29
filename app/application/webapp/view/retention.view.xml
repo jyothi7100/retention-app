@@ -23,45 +23,45 @@
 
       <HBox id="_IDGenHBox" justifyContent="SpaceAround" class="sapUiSmallMarginBottom">
 
-        <GenericTile id="_IDGenGenericTile" header="All" subheader="Total Records" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile" header="All" subheader="Total Records" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent">
-            <NumericContent id="_IDGenNumericContent" value="{kpi>/AllCount}" icon="sap-icon://database" valueColor="Neutral"/>
+            <NumericContent id="_IDGenNumericContent" value="{kpi>/AllCount}" icon="sap-icon://database" valueColor="Neutral" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile1" header="Retained" subheader="Retention Due" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile1" header="Retained" subheader="Retention Due" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent1">
-            <NumericContent id="_IDGenNumericContent1" value="{kpi>/RetainedCount}" icon="sap-icon://locked" valueColor="Critical"/>
+            <NumericContent id="_IDGenNumericContent1" value="{kpi>/RetainedCount}" icon="sap-icon://locked" valueColor="Critical" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile2" header="Due for Refund" subheader="Pending Refunds" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile2" header="Due for Refund" subheader="Pending Refunds" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent2">
-            <NumericContent id="_IDGenNumericContent2" value="{kpi>/RefundCount}" icon="sap-icon://payment-approval" valueColor="Critical"/>
+            <NumericContent id="_IDGenNumericContent2" value="{kpi>/RefundCount}" icon="sap-icon://payment-approval" valueColor="Critical" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile3" header="Request In Progress" subheader="Workflow Running" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile3" header="Request In Progress" subheader="Workflow Running" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent3">
-            <NumericContent id="_IDGenNumericContent3" value="{kpi>/ProgressCount}" icon="sap-icon://process" valueColor="Neutral"/>
+            <NumericContent id="_IDGenNumericContent3" value="{kpi>/ProgressCount}" icon="sap-icon://process" valueColor="Neutral" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile4" header="Approved" subheader="Completed" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile4" header="Approved" subheader="Completed" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent4">
-            <NumericContent id="_IDGenNumericContent4" value="{kpi>/ApprovedCount}" icon="sap-icon://accept" valueColor="Good"/>
+            <NumericContent id="_IDGenNumericContent4" value="{kpi>/ApprovedCount}" icon="sap-icon://accept" valueColor="Good" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile5" header="Rejected" subheader="Declined" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile5" header="Rejected" subheader="Declined" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent5">
-            <NumericContent id="_IDGenNumericContent5" value="{kpi>/RejectedCount}" icon="sap-icon://decline" valueColor="Error"/>
+            <NumericContent id="_IDGenNumericContent5" value="{kpi>/RejectedCount}" icon="sap-icon://decline" valueColor="Error" tooltip=" "/>
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile6" header="Paid" subheader="Payment Cleared" press="onTilePress">
+        <GenericTile id="_IDGenGenericTile6" header="Paid" subheader="Payment Cleared" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent6">
-            <NumericContent id="_IDGenNumericContent6" value="{kpi>/PaidCount}" icon="sap-icon://money-bills" valueColor="Good"/>
+            <NumericContent id="_IDGenNumericContent6" value="{kpi>/PaidCount}" icon="sap-icon://money-bills" valueColor="Good" tooltip=" "/>
           </TileContent>
         </GenericTile>
 

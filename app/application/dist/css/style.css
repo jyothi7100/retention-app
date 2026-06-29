@@ -35,6 +35,9 @@ div[id*="_IDGenTableTitle"] {
 [id*="_IDGenGenericTile2"].sapMGT {
     border-color: #1fc1ff !important;
 }
+[id*="_IDGenGenericTile2"] [id*="-value-inner"] {
+    color: #1fc1ff !important;
+}
 
 /* All OTHER KPI tiles (All, Retained, Request In Progress, Approved,
    Rejected, Paid) - border and number color in #fb6f00 per the same
@@ -67,4 +70,23 @@ div[id*="_IDGenTableTitle"] {
    color as the dashboard's "Retention Platform" title above. */
 h4[id*="_IDGenClaimHeaderTitle"] {
     color: #fb6f00 !important;
+}
+
+
+
+/* FIXED 2026-06-29: confirmed via DOM inspection that the visible
+   "All"/"Retained"/etc text lives in a NESTED span.sapMGTTitle
+   inside .sapMGTHdrTxt, not as direct text on .sapMGTHdrTxt itself -
+   color doesn't inherit through it since sapMText has its own
+   color rule from the library. Targeting .sapMGTTitle directly
+   (also confirmed present in the DOM) is the correct, specific fix. */
+.sapMGT:not([id*="_IDGenGenericTile2"]) .sapMGTTitle {
+    color: #fb6f00 !important;
+}
+
+/* "Due for Refund" tile's header text - #1fc1ff per user requirement
+   2026-06-29, matching its existing background/border color. Same
+   .sapMGTTitle class confirmed correct above. */
+[id*="_IDGenGenericTile2"] .sapMGTTitle {
+    color: #1fc1ff !important;
 }
