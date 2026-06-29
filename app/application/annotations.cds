@@ -1,0 +1,1 @@
+using RetentionService as service from '../../srv/retention-service';

@@ -1,0 +1,70 @@
+/* Page title color - updated 2026-06-29 to #fb6f00 per user
+   requirement (was #F26F07). */
+h4[id*="_IDGenTitle"] {
+    color: #fb6f00 !important;
+}
+
+/* Table toolbar title ("Retention Details") - confirmed via DOM
+   inspection 2026-06-26 that this renders as a <div role="heading">
+   with id ..._IDGenTableTitle, NOT an <h4> like the page header
+   title - hence needing its own selector. */
+div[id*="_IDGenTableTitle"] {
+    color: #F26F07 !important;
+}
+/* Makes the FileUploader's "Attach a file (optional)" button look
+   like a plain hyperlink instead of a button. */
+.attachFileLinkStyle button {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    color: #0a6ed1 !important;
+    text-decoration: underline !important;
+    cursor: pointer !important;
+    font-weight: normal !important;
+}
+.attachFileLinkStyle button:hover {
+    color: #0854a0 !important;
+}
+/* "Due for Refund" KPI tile - background AND border in #1fc1ff per
+   user requirement 2026-06-27 (supersedes the earlier number-only
+   version above) - number color deliberately left untouched. The
+   tile's outer wrapper IS the .sapMGT element itself (confirmed via
+   DOM inspection earlier), not a descendant - same selector pattern
+   already proven correct for the Select for Claim button fix. */
+[id*="_IDGenGenericTile2"].sapMGT {
+    border-color: #1fc1ff !important;
+}
+
+/* All OTHER KPI tiles (All, Retained, Request In Progress, Approved,
+   Rejected, Paid) - border and number color in #fb6f00 per the same
+   2026-06-27 requirement. Excludes _IDGenGenericTile2 (Due for
+   Refund) explicitly via :not(), since that one has its own distinct
+   styling above. */
+.sapMGT:not([id*="_IDGenGenericTile2"]) {
+    border-color: #fb6f00 !important;
+}
+.sapMGT:not([id*="_IDGenGenericTile2"]) [id*="-value-inner"] {
+    color: #fb6f00 !important;
+}
+/* "Select for Claim" button - custom background color per user
+   requirement 2026-06-27. */
+[id*="_IDGenSubmitClaimButton"] {
+    background-color: #1003a0 !important;
+    border-color: #1003a0 !important;
+}
+
+/* "Submit Claim" button on the Claim Detail page - same #1003a0
+   background per user requirement 2026-06-27, matching the
+   dashboard's "Select for Claim" button above. */
+[id*="_IDGenSendToS4Button"] {
+    background-color: #1003a0 !important;
+    border-color: #1003a0 !important;
+}
+
+/* Claim Detail page's header title (e.g. "Claim RTAClaim-1 - PO
+   4800001659") - #fb6f00 per user requirement 2026-06-29, same
+   color as the dashboard's "Retention Platform" title above. */
+h4[id*="_IDGenClaimHeaderTitle"] {
+    color: #fb6f00 !important;
+}

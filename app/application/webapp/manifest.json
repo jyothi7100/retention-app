@@ -1,0 +1,141 @@
+{
+  "_version": "1.85.0",
+  "sap.app": {
+    "id": "application",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.27.0",
+      "toolsId": "ceaa4031-f18c-4c9f-b3c9-72500f4732e7"
+    },
+    "dataSources": {
+      "mainService": {
+        "uri": "/odata/v4/retention/",
+        "type": "OData",
+        "settings": {
+          "annotations": [],
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.149.0",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {},
+        "sap.ui.unified": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "application.i18n.i18n"
+        }
+      },
+      "": {
+        "dataSource": "mainService",
+        "preload": true,
+        "settings": {
+          "operationMode": "Server",
+          "autoExpandSelect": true,
+          "earlyRequests": true
+        }
+      }
+    },
+    "resources": {
+  "css": [
+    {
+      "uri": "css/style.css"
+    }
+  ],
+  "js": [
+    {
+      "uri": "lib/mammoth.browser.min.js"
+    },
+    {
+      "uri": "lib/xlsx.full.min.js"
+    }
+  ]
+},
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "application.view",
+        "async": true,
+        "viewPath": "application.view"
+      },
+      "routes": [
+        {
+          "name": "Routeretention",
+          "pattern": ":?query:",
+          "target": [
+            "Targetretention"
+          ]
+        },
+        {
+    "name": "RouteClaimDetail",
+    "pattern": "claimDetail:?query:",
+    "target": [
+      "TargetClaimDetail"
+    ]
+  }
+      ],
+      "targets": {
+        "Targetretention": {
+          "id": "retention",
+          "name": "retention"
+        },
+        "TargetClaimDetail": {
+    "id": "claimDetail",
+    "name": "ClaimDetail"
+  }
+      }
+    },
+    "rootView": {
+      "viewName": "application.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "ManagedAppRouter"
+  }
+}

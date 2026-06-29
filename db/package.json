@@ -1,0 +1,12 @@
+{
+  "name": "retention-app-db",
+  "version": "1.0.0",
+  "description": "HDI deployment module for retention-app",
+  "dependencies": {
+    "@sap/hdi-deploy": "^5",
+    "@sap/hana-client": "^2"
+  },
+  "scripts": {
+    "start": "node node_modules/@sap/hdi-deploy/deploy.js"
+  }
+}

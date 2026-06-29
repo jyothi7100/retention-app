@@ -1,0 +1,155 @@
+<mvc:View controllerName="application.controller.ClaimDetail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:u="sap.ui.unified"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m">
+  <Page id="claimDetailPage">
+    <customHeader>
+      <Bar id="_IDGenClaimHeaderBar">
+        <contentLeft>
+          <!-- CHANGED 2026-06-27: replaced the Page's default
+               showNavButton (a bare icon, no text option) with a real
+               Button - per user requirement, this needs visible
+               "Back to Dashboard" text alongside the arrow icon, which
+               showNavButton cannot do on its own. Reuses the exact
+               same onNavBack handler the old nav button called. -->
+          <Button id="_IDGenBackToDashboardButton"
+              icon="sap-icon://nav-back"
+              tooltip="Back to Dashboard"
+              type="Transparent"
+              press="onNavBack"/>
+          <!-- Title text is set dynamically in the controller (see
+               onRouteMatched), since it needs to include the actual
+               PO Number being claimed against - e.g. "Claiming
+               Retention Against PO 4800001659" - which isn't known
+               until the page receives the selected records. -->
+          <Title id="_IDGenClaimHeaderTitle" text="Claiming Retention" level="H4" class="sapUiTinyMarginBegin"/>
+        </contentLeft>
+        <contentRight>
+        <Image id="_IDGenImage1" 
+          src="{ value: 'application/images/logo.png', formatter: 'sap.ui.require.toUrl' }"
+          height="45px"
+          densityAware="false"
+          class="sapUiSmallMarginEnd"/>
+      </contentRight>
+
+      </Bar>
+    </customHeader>
+
+    <VBox id="_IDGenClaimDetailVBox" class="sapUiSmallMargin">
+
+      <!-- CHANGED 2026-06-26: now a real Table (same columns as the
+           main dashboard), not a simple List - bound to the
+           "claimRecords" local JSON model (set in the controller's
+           _onRouteMatched, from the records handed off via the
+           Component), since this page's data is a plain in-memory
+           array of selected records, not an OData-bound collection.
+           The Attachment column's per-row controls are still built
+           imperatively in the controller (same as the dashboard),
+           since FileUploader/Icon instances need individual JS
+           object identity to track per-record file state - that part
+           can't be done via simple XML bindings. -->
+      <Table id="_IDGenClaimRecordsTable" items="{claimRecords>/records}" noDataText="No records selected.">
+        <columns>
+          <Column id="_IDGenClaimColRetentionId"><Text id="_IDGenClaimColRetentionIdText" text="Retention ID"/></Column>
+          <Column id="_IDGenClaimColInvoice"><Text id="_IDGenClaimColInvoiceText" text="Invoice"/></Column>
+          <Column id="_IDGenClaimColDescription"><Text id="_IDGenClaimColDescriptionText" text="Description"/></Column>
+          <Column id="_IDGenClaimColInvoiceDate"><Text id="_IDGenClaimColInvoiceDateText" text="Invoice Date"/></Column>
+          <Column id="_IDGenClaimColNetValue"><Text id="_IDGenClaimColNetValueText" text="Net Value"/></Column>
+          <Column id="_IDGenClaimColRetentionAmount"><Text id="_IDGenClaimColRetentionAmountText" text="Retention Amount"/></Column>
+          <Column id="_IDGenClaimColDueDate"><Text id="_IDGenClaimColDueDateText" text="Due Date"/></Column>
+          <Column id="_IDGenClaimColStatus"><Text id="_IDGenClaimColStatusText" text="Status"/></Column>
+          <Column id="_IDGenClaimColAttachment" width="16rem" minScreenWidth="Tablet" demandPopin="true"><Text id="_IDGenClaimColAttachmentText" text="Attachment"/></Column>
+        </columns>
+        <items>
+          <ColumnListItem id="_IDGenClaimColumnListItem">
+            <cells>
+              <Text id="_IDGenClaimCellRetentionId" text="{= ${claimRecords>Invoicenumber} + '-' + ${claimRecords>Invoiceyear} + '-' + ${claimRecords>Companycode} }"/>
+              <Text id="_IDGenClaimCellInvoice" text="{claimRecords>Invoicenumber}"/>
+              <Text id="_IDGenClaimCellDescription" text="{claimRecords>Invoicedescription}"/>
+              <Text id="_IDGenClaimCellInvoiceDate" text="{claimRecords>Invoicedate}"/>
+              <Text id="_IDGenClaimCellNetValue" text="{parts: [{path: 'claimRecords>Netamount'}, {path: 'claimRecords>Currency'}], formatter: '.formatAmountWithCurrency'}"/>
+              <Text id="_IDGenClaimCellRetentionAmount" text="{parts: [{path: 'claimRecords>Retentionamount'}, {path: 'claimRecords>Currency'}], formatter: '.formatAmountWithCurrency'}"/>
+              <Text id="_IDGenClaimCellDueDate" text="{claimRecords>Netduedate}"/>
+              <Text id="_IDGenClaimCellStatus" text="{parts: [{path: 'claimRecords>FinalStatus'}, {path: 'claimRecords>Invoicenumber'}], formatter: '.formatStatusText'}"/>
+              <!-- CHANGED 2026-06-26: removed the PO Number cell -
+                   redundant on this page, since every record shown
+                   here already shares one PO (enforced by the
+                   dashboard's single-PO selection rule before
+                   navigating here). -->
+              <!-- Attachment cell content (paperclip icon, and one
+                   row per attached file below it) is injected here
+                   imperatively by the controller after the table
+                   renders - see _injectAttachmentCells - since
+                   ColumnListItem cells in a static XML template can't
+                   easily host per-row dynamically constructed control
+                   trees the way this app's other attachment UI needs.
+                   A placeholder VBox (CHANGED from HBox - see
+                   _injectAttachmentCells comment for why) sits here
+                   so each row has a real cell to inject into. -->
+              <VBox id="_IDGenClaimAttachmentBox"/>
+            </cells>
+          </ColumnListItem>
+        </items>
+      </Table>
+
+      <HBox id="_IDGenClaimActionsBox" justifyContent="End" class="sapUiMediumMarginTop"
+          visible="{= !${viewState>/readOnly} }">
+        <Button id="_IDGenSendToS4Button" text="Submit Claim" type="Emphasized" press="onSendToS4"/>
+      </HBox>
+
+    </VBox>
+
+    <!-- CHANGED 2026-06-26: ported from the dashboard's original
+         view (retention.controller.js used to own this functionality
+         before its Attachment column was removed) - CSV preview
+         dialog. Opened by _openFileForView specifically for .csv
+         files, since browsers have no native inline viewer for CSV
+         (they download it instead) - this renders the parsed rows as
+         a simple table so "View" actually shows the content rather
+         than triggering a download. Bound to the "csvPreview" local
+         JSON model, populated dynamically in the controller since CSV
+         files can have any number of columns (columns aggregation is
+         built dynamically too, see _showCsvPreview /
+         _renderCsvPreviewTable in the controller). -->
+    <Dialog
+        id="_IDGenCsvPreviewDialog"
+        title="{csvPreview>/fileName}"
+        contentWidth="48rem"
+        contentHeight="32rem"
+        resizable="true">
+      <content>
+        <Table id="_IDGenCsvPreviewTable" growing="true" growingThreshold="50"/>
+      </content>
+      <endButton>
+        <Button id="_IDGenCsvPreviewCloseButton" text="Close" press="onCsvPreviewClose"/>
+      </endButton>
+    </Dialog>
+
+    <!-- Generic HTML-content preview dialog, also ported from the
+         dashboard. Opened by _openFileForView for .docx (converted
+         to HTML via Mammoth.js) and .xlsx (converted to an HTML table
+         via SheetJS's sheet_to_html) - both libraries produce raw
+         HTML as their output, so one shared dialog with an
+         sap.ui.core.HTML control covers both file types. The HTML
+         control's content is set imperatively in the controller
+         (_renderHtmlPreview), not via data binding, since it's raw
+         markup rather than a model value. -->
+    <Dialog
+        id="_IDGenHtmlPreviewDialog"
+        title="{htmlPreview>/fileName}"
+        contentWidth="52rem"
+        contentHeight="36rem"
+        resizable="true">
+      <content>
+        <ScrollContainer id="_IDGenHtmlPreviewScroll" height="100%" width="100%" vertical="true" horizontal="true">
+          <core:HTML id="_IDGenHtmlPreviewContent" content="&lt;div/&gt;"/>
+        </ScrollContainer>
+      </content>
+      <endButton>
+        <Button id="_IDGenHtmlPreviewCloseButton" text="Close" press="onHtmlPreviewClose"/>
+      </endButton>
+    </Dialog>
+
+  </Page>
+</mvc:View>
