@@ -158,50 +158,49 @@ sap.ui.define([
                 });
             }, 0);
         },
-        _renderReadOnlyAttachments: function () {
-            const oTable = this.byId("_IDGenClaimRecordsTable");
+        _renderReadOnlyAttachments: async function () {
+    const oTable = this.byId("_IDGenClaimRecordsTable");
+    const oModel = this.getOwnerComponent().getModel();
 
-            setTimeout(() => {
-                oTable.getItems().forEach(oItem => {
-                    const oContext = oItem.getBindingContext("claimRecords");
-                    if (!oContext) {
-                        return;
-                    }
-                    const record = oContext.getObject();
+    setTimeout(async () => {
+        for (const oItem of oTable.getItems()) {
+            const oContext = oItem.getBindingContext("claimRecords");
+            if (!oContext) continue;
+            const record = oContext.getObject();
 
-                    const oAttachmentBox = oItem.getCells().find(
-                        ctrl => ctrl.getMetadata().getName() === "sap.m.VBox"
-                    );
-                    if (!oAttachmentBox) {
-                        return;
-                    }
+            const oAttachmentBox = oItem.getCells().find(
+                ctrl => ctrl.getMetadata().getName() === "sap.m.VBox"
+            );
+            if (!oAttachmentBox) continue;
+            oAttachmentBox.destroyItems();
 
-                    oAttachmentBox.destroyItems();
+            try {
+                // Fetch actual attachments from HANA via OData
+                const aContexts = await oModel
+                    .bindList(`/ClaimRecords(ClaimId='${record.ClaimId}',Invoicenumber='${record.Invoicenumber}')/attachments`)
+                    .requestContexts();
 
-                    let aAttachments = [];
-                    try {
-                        aAttachments = JSON.parse(record.AttachmentsJson || "[]");
-                    } catch (oError) {
-                        // fall back to empty list
-                    }
+                const aAttachments = aContexts.map(ctx => ctx.getObject());
 
-                    if (aAttachments.length === 0) {
-                        oAttachmentBox.addItem(new Text({ text: "None" }));
-                        return;
-                    }
+                if (aAttachments.length === 0) {
+                    oAttachmentBox.addItem(new Text({ text: "None" }));
+                    return;
+                }
 
-                    aAttachments.forEach(oFile => {
-                        oAttachmentBox.addItem(new Text({
-                            text: oFile.name,
-                            tooltip: oFile.name,
-                            width: "9rem",
-                            wrapping: false
-                        }).addStyleClass("sapUiTinyMarginTop"));
-                    });
+                aAttachments.forEach(oFile => {
+                    oAttachmentBox.addItem(new Text({
+                        text: oFile.filename || oFile.name || "",
+                        tooltip: oFile.filename || oFile.name || "",
+                        width: "9rem",
+                        wrapping: false
+                    }).addStyleClass("sapUiTinyMarginTop"));
                 });
-            }, 0);
-        },
-
+            } catch (e) {
+                oAttachmentBox.addItem(new Text({ text: "Could not load attachments." }));
+            }
+        }
+    }, 0);
+},
         // ADDED 2026-06-27: restricts attachments to a fixed allowlist
         // of file extensions, per user requirement - reported issue
         // was that a .exe file could be attached, since the
@@ -560,22 +559,8 @@ sap.ui.define([
             const oModel = this.getOwnerComponent().getModel();
             const oAction = oModel.bindContext("/submitClaimWithAttachments(...)");
 
-            // Flatten this._oAttachments (Invoicenumber -> File[])
-            // into the flat, tagged array shape the backend action
-            // expects (see the .cds action signature comment on why
-            // this is flat rather than nested - CDS does not support
-            // "array of array of {...}").
-            const aAttachments = [];
-            Object.keys(this._oAttachments).forEach(sInvoicenumber => {
-                this._oAttachments[sInvoicenumber].forEach(oFile => {
-                    aAttachments.push({
-                        Invoicenumber: sInvoicenumber,
-                        name: oFile.name,
-                        size: oFile.size,
-                        type: oFile.type
-                    });
-                });
-            });
+           
+           
 
             oAction.setParameter("records", this._aRecords.map(record => ({
                 Invoicenumber: record.Invoicenumber,
@@ -585,7 +570,7 @@ sap.ui.define([
                 Fiscalyear: record.Fiscalyear,
                 Purchaseorder: record.Purchaseorder
             })));
-            oAction.setParameter("attachments", aAttachments);
+           
 
             console.log("=== onSendToS4: about to invoke action ===");
             oAction.invoke()
@@ -593,9 +578,11 @@ sap.ui.define([
                     console.log("=== onSendToS4: invoke() resolved ===");
                     return oAction.getBoundContext().requestObject();
                 })
-                .then((oResult) => {
-                    console.log("=== onSendToS4: requestObject() resolved with:", JSON.stringify(oResult));
-                    this._showResultsAndNavigateBack(oResult);
+               .then(async (oResult) => {
+    console.log("=== onSendToS4: requestObject() resolved with:", JSON.stringify(oResult));
+    await this._uploadAttachments(oResult.ClaimId);
+    this._showResultsAndNavigateBack(oResult);
+
                 })
                 .catch((oError) => {
                     console.log("=== onSendToS4: caught error:", oError);
@@ -608,6 +595,41 @@ sap.ui.define([
                     oPage.setBusy(false);
                 });
         },
+
+        _uploadAttachments: async function (sClaimId) {
+    const sServiceUrl = this.getOwnerComponent().getModel().getServiceUrl();
+
+    for (const [sInvoicenumber, aFiles] of Object.entries(this._oAttachments)) {
+        for (const oFile of aFiles) {
+            try {
+                // Step 1: POST to create the attachment metadata entry
+                const sPostUrl = `${sServiceUrl}ClaimRecords(ClaimId='${sClaimId}',Invoicenumber='${sInvoicenumber}')/attachments`;
+                const oPostResponse = await fetch(sPostUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ filename: oFile.name, mimeType: oFile.type })
+                });
+                if (!oPostResponse.ok) {
+                    console.error("Failed to create attachment entry for", oFile.name);
+                    continue;
+                }
+                const oPostResult = await oPostResponse.json();
+                const sAttachmentId = oPostResult.ID;
+
+                // Step 2: PUT the actual file bytes
+                const sPutUrl = `${sServiceUrl}ClaimRecords(ClaimId='${sClaimId}',Invoicenumber='${sInvoicenumber}')/attachments(ID=${sAttachmentId},up__ClaimId='${sClaimId}',up__Invoicenumber='${sInvoicenumber}')/content`;
+                await fetch(sPutUrl, {
+                    method: "PUT",
+                    headers: { "Content-Type": oFile.type || "application/octet-stream" },
+                    body: oFile
+                });
+            } catch (oError) {
+                console.error("Error uploading attachment", oFile.name, oError);
+                MessageToast.show("Warning: attachment " + oFile.name + " could not be uploaded.");
+            }
+        }
+    }
+},
 
         // FIXED 2026-06-26: switched from MessageToast to a modal
         // MessageBox. The toast WAS actually showing correctly (see

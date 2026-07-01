@@ -9,13 +9,16 @@
     <Bar id="_IDGenBar1">
       <contentLeft>
         <Title id="_IDGenTitle3" text="Retention Platform" level="H4"/>
+       
       </contentLeft>
       <contentRight>
+      <Text id="_IDGenLoggedInAsText" text="{loggedInUser>/displayText}" class="sapUiTinyMarginTop"/>
         <Image id="_IDGenImage"
           src="{ value: 'application/images/logo.png', formatter: 'sap.ui.require.toUrl' }"
           height="45px"
           densityAware="false"
           class="sapUiSmallMarginEnd"/>
+           
       </contentRight>
     </Bar>
   </customHeader>

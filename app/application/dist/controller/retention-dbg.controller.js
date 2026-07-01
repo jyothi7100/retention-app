@@ -12,6 +12,9 @@ sap.ui.define([
 
     return Controller.extend("application.controller.Retention", {
         onInit() {
+
+            this.getView().setModel(new JSONModel({ displayText: "" }), "loggedInUser");
+            this._loadLoggedInUser();
             // CHANGED 2026-06-26: attachments now live entirely on
             // the new Claim Detail page (see
             // ClaimDetail.controller.js) - the dashboard no longer
@@ -39,7 +42,29 @@ sap.ui.define([
                 .attachPatternMatched(this._loadRetentionData, this);
         },
 
+        _loadLoggedInUser: function () {
+    const oModel = this.getOwnerComponent().getModel();
+    const oOperation = oModel.bindContext("/whoAmI(...)");
 
+    oOperation.execute().then(() => {
+        const oResult = oOperation.getBoundContext().getObject();
+        let sText = "Logged in as: " + oResult.id;
+        if (oResult.anid) {
+            sText += " (ANID: " + oResult.anid + ")";
+        }
+        this.getView().getModel("loggedInUser").setProperty("/displayText", sText);
+    }).catch((oError) => {
+        this.getView().getModel("loggedInUser").setProperty("/displayText", "Not authorized");
+
+        const iStatusCode = oError?.error?.["@http.status"] || oError?.status || (oError?.message && oError.message.includes("403") ? 403 : null);
+
+        if (iStatusCode === 403 || (oError?.message && oError.message.toLowerCase().includes("forbidden"))) {
+            MessageToast.show("You are not authorized to access this application. Please contact your administrator.");
+        } else {
+            MessageToast.show("Unable to verify your login. Please try again.");
+        }
+    });
+},
         // ---------------------------------------------------------
         // Load Retention Data + Claim Records from CAP Service
         // ---------------------------------------------------------
@@ -281,7 +306,7 @@ sap.ui.define([
 
             this.getView().getModel("retentionList").setData({ records: aFiltered });
             this._refreshClaimRelatedCells();
-            MessageToast.show("Filtered by: " + tileHeader);
+           // MessageToast.show("Filtered by: " + tileHeader);
         },
 
         // ---------------------------------------------------------

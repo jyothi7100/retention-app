@@ -6,6 +6,10 @@
     {
       "name": "uaa.user",
       "description": "UAA"
+    },
+    {
+      "name": "$XSAPPNAME.SupplierUser",
+      "description": "Supplier Access"
     }
   ],
   "role-templates": [
@@ -15,9 +19,26 @@
       "scope-references": [
         "uaa.user"
       ]
+    },
+    {
+      "name": "SupplierRole",
+      "description": "Dynamically filters data by ANID",
+      "scope-references": [
+        "$XSAPPNAME.SupplierUser"
+      ],
+      "attribute-references": [
+        "anid"
+      ]
     }
   ],
-  "attributes": [],
+  "attributes": [
+    {
+      "name": "anid",
+      "description": "Ariba Network ID",
+       "valueType": "string",
+      "valueRequired": true
+    }
+  ],
   "oauth2-configuration": {
     "redirect-uris": [
       "https://*.us10-001.hana.ondemand.com/**",

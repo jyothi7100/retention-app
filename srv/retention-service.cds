@@ -1,5 +1,6 @@
 using retention.db as db from '../db/schema';
 
+@(requires: 'authenticated-user')
 service RetentionService {
 
   entity RetentionList {
@@ -28,12 +29,18 @@ service RetentionService {
     FinalStatus              : String;
   }
 
-  // Exposed read-only so the new Claim Detail page can look up a
-  // previously-submitted claim's persisted record by ClaimId if
-  // needed (e.g. on a page refresh) - the primary write path is via
-  // submitClaimWithAttachments below, not direct entity CRUD.
-  @readonly
   entity ClaimRecords as projection on db.ClaimRecords;
+
+
+  // Returns the currently logged-in user's identity, attributes
+  // (e.g. anid), and roles - used by the UI to display "Logged in
+  // as: ..." on the Fiori page itself. Unbound function so it can be
+  // called without any entity context, just GET .../whoAmI().
+  function whoAmI() returns {
+    id    : String;
+    anid  : String;
+    roles : String;
+  };
 
   // ---------------------------------------------------------------
   // Submit Claim (with attachments + HANA persistence) action
@@ -71,13 +78,8 @@ service RetentionService {
       Accountingdocument     : String;
       Fiscalyear              : String;
       Purchaseorder            : String;
-    },
-    attachments: array of {
-      Invoicenumber : String;
-      name           : String;
-      size           : Integer;
-      type           : String;
     }
+    
   ) returns {
     ClaimId : String;
     results : array of {
@@ -88,3 +90,5 @@ service RetentionService {
     };
   };
 }
+
+

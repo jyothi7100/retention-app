@@ -2,6 +2,7 @@
   "name": "retention-app",
   "version": "1.0.0",
   "dependencies": {
+    "@cap-js/attachments": "^3.13.1",
     "@cap-js/hana": "^2",
     "@sap-cloud-sdk/http-client": "^4.7.0",
     "@sap-cloud-sdk/resilience": "^4.7.0",
@@ -30,6 +31,9 @@
     "server": {
       "index": true
     },
+    "attachments": {
+      "scan": true
+    },
     "build": {
       "tasks": [
         {
@@ -51,10 +55,45 @@
       "db": {
         "kind": "sqlite"
       },
+      "auth": {
+        "kind": "mocked",
+        "users": {
+          "test-supplier-1": {
+            "password": "supplier1Pass",
+            "roles": [
+              "SupplierRole"
+            ],
+            "attr": {
+              "anid": "AN01020304050-T"
+            }
+          },
+          "test-supplier-2": {
+            "password": "supplier2Pass",
+            "roles": [
+              "SupplierRole"
+            ],
+            "attr": {
+              "anid": "AN09988776655-T"
+            }
+          }
+        }
+      },
       "[production]": {
         "auth": "xsuaa",
         "db": {
           "kind": "hana"
+        },
+        "attachments": {
+         "kind": "db"
+      }
+      },
+      "[hybrid]": {
+        "auth": "mocked",
+        "db": {
+          "kind": "hana"
+        },
+        "attachments": {
+          "kind": "db"
         }
       }
     }

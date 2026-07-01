@@ -10,6 +10,7 @@ modules:
   - name: retention-app-db
   - name: uaa_retention-app
   - name: retention-app-destination-service
+  - name: retention-app-malware-scanner
 
   provides:
   - name: srv-api
@@ -98,6 +99,7 @@ resources:
   parameters:
     service: hana
     service-plan: hdi-shared
+
 - name: retention-app-destination-service
   type: org.cloudfoundry.managed-service
   parameters:
@@ -125,12 +127,14 @@ resources:
     service-plan: lite
   requires:
   - name: srv-api
+
 - name: retention-app_html_repo_host
   type: org.cloudfoundry.managed-service
   parameters:
     service: html5-apps-repo
     service-name: retention-app-html5-app-host-service
     service-plan: app-host
+
 - name: retention-app-html5-runtime
   type: org.cloudfoundry.managed-service
   parameters:
@@ -152,6 +156,14 @@ resources:
     service: xsuaa
     service-name: retention-app-xsuaa-service
     service-plan: application
+
+# Reuses the existing malware scanner instance already provisioned
+# in the subaccount - no new instance created on deploy.
+- name: retention-app-malware-scanner
+  type: org.cloudfoundry.existing-service
+  parameters:
+    service-name: ARIBA-T_Malware Scanning Service
+
 parameters:
   deploy_mode: html5-repo
   enable-parallel-deployments: true

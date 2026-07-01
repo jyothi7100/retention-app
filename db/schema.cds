@@ -1,4 +1,5 @@
 namespace retention.db;
+using { Attachments } from '@cap-js/attachments';
 
 /**
  * Mirrors the real shape of the S/4HANA OData entity
@@ -131,7 +132,7 @@ entity ClaimRecords {
       // names of files attached to THIS SPECIFIC record within the
       // claim (attachments remain per-record, per the requirement
       // confirmed 2026-06-25, not shared across the whole claim).
-      AttachmentsJson         : LargeString;
+      attachments         : Composition of many Attachments; // REPLACES AttachmentsJson
 
       // Result of the S4/CPI submission for this specific record -
       // stored alongside the claim so the outcome is preserved, not

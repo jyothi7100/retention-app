@@ -1,5 +1,26 @@
+
+
 const cds = require("@sap/cds");
 const xml2js = require("xml2js");
+
+// Ensure cds.db is set from the active connection so the
+// @cap-js/attachments plugin's handleDuplicates query resolves
+// against the correct HANA instance rather than the global bun cds.
+cds.on("connect", async (service) => {
+  if (service.name === "db") {
+    cds.db = service;
+    // Also patch the global bun cds instance if it exists,
+    // since @cap-js/attachments resolves queries against it
+    try {
+      const globalCds = require("/extbin/globals/bun/global/install/node_modules/@sap/cds");
+      if (globalCds && globalCds !== cds) {
+        globalCds.db = service;
+      }
+    } catch (e) {
+      // global bun cds not present, no action needed
+    }
+  }
+});
 
 /**
  * Derives the business-facing FinalStatus (tile name) from the raw
@@ -121,6 +142,24 @@ module.exports = cds.service.impl(async function () {
     return mapped;
   });
 
+
+  // ---------------------------------------------------------------
+  // whoAmI - returns the current logged-in user's id, anid, and
+  // roles, so the UI can display "Logged in as: ..." on the page.
+  // ---------------------------------------------------------------
+  this.on("whoAmI", (req) => {
+  const aKnownRoles = ["SupplierRole", "authenticated-user", "any"];
+  const aActiveRoles = aKnownRoles.filter(r => req.user?.is?.(r));
+
+  return {
+    id: req.user?.id || "",
+    anid: req.user?.attr?.anid || "",
+    roles: aActiveRoles.join(", ")
+  };
+});
+
+
+
   // ---------------------------------------------------------------
   // Submit Claim action
   // ---------------------------------------------------------------
@@ -160,7 +199,7 @@ module.exports = cds.service.impl(async function () {
   // row per record (sharing that ClaimId) with the S4 result AND that
   // record's attachment file metadata.
   this.on("submitClaimWithAttachments", async (req) => {
-    const { records, attachments } = req.data;
+    const { records } = req.data;
     const dest = await cds.connect.to("CPI_RETENTION");
     const { ClaimRecords } = this.entities;
 
@@ -295,10 +334,6 @@ module.exports = cds.service.impl(async function () {
 
     const aRowsToInsert = aSucceededRecords.map(record => {
       const oResult = aResults.find(r => r.Invoicenumber === record.Invoicenumber);
-      const aOwnAttachments = (attachments || []).filter(
-        a => a.Invoicenumber === record.Invoicenumber
-      );
-
       return {
         ClaimId: sClaimId,
         ClaimSequence: iNextSequence,
@@ -308,9 +343,6 @@ module.exports = cds.service.impl(async function () {
         Accountingdocument: record.Accountingdocument,
         Fiscalyear: record.Fiscalyear,
         Purchaseorder: record.Purchaseorder,
-        AttachmentsJson: JSON.stringify(
-          aOwnAttachments.map(a => ({ name: a.name, size: a.size, type: a.type }))
-        ),
         SubmissionSuccess: true,
         SubmissionSubrc: oResult.subrc || "",
         SubmissionMessage: oResult.message || ""
