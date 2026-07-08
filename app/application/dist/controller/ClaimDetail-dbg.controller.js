@@ -159,47 +159,48 @@ sap.ui.define([
             }, 0);
         },
         _renderReadOnlyAttachments: async function () {
-    const oTable = this.byId("_IDGenClaimRecordsTable");
-    const oModel = this.getOwnerComponent().getModel();
+  const oTable = this.byId("_IDGenClaimRecordsTable");
+  const oModel = this.getOwnerComponent().getModel();
 
-    setTimeout(async () => {
-        for (const oItem of oTable.getItems()) {
-            const oContext = oItem.getBindingContext("claimRecords");
-            if (!oContext) continue;
-            const record = oContext.getObject();
+  setTimeout(async () => {
+    for (const oItem of oTable.getItems()) {
+      const oContext = oItem.getBindingContext("claimRecords");
+      if (!oContext) continue;
+      const record = oContext.getObject();
 
-            const oAttachmentBox = oItem.getCells().find(
-                ctrl => ctrl.getMetadata().getName() === "sap.m.VBox"
-            );
-            if (!oAttachmentBox) continue;
-            oAttachmentBox.destroyItems();
+      const oAttachmentBox = oItem.getCells().find(
+        ctrl => ctrl.getMetadata().getName() === "sap.m.VBox"
+      );
+      if (!oAttachmentBox) continue;
+      oAttachmentBox.destroyItems();
 
-            try {
-                // Fetch actual attachments from HANA via OData
-                const aContexts = await oModel
-                    .bindList(`/ClaimRecords(ClaimId='${record.ClaimId}',Invoicenumber='${record.Invoicenumber}')/attachments`)
-                    .requestContexts();
+      try {
+        // Fetch record from HANA to get AttachmentsJson
+        const oBinding = oModel.bindContext(
+          `/ClaimRecords(ClaimId='${record.ClaimId}',Invoicenumber='${record.Invoicenumber}')`
+        );
+        await oBinding.requestObject();
+        const oRecord = oBinding.getBoundContext().getObject();
+        const aAttachments = JSON.parse(oRecord?.AttachmentsJson || "[]");
 
-                const aAttachments = aContexts.map(ctx => ctx.getObject());
-
-                if (aAttachments.length === 0) {
-                    oAttachmentBox.addItem(new Text({ text: "None" }));
-                    return;
-                }
-
-                aAttachments.forEach(oFile => {
-                    oAttachmentBox.addItem(new Text({
-                        text: oFile.filename || oFile.name || "",
-                        tooltip: oFile.filename || oFile.name || "",
-                        width: "9rem",
-                        wrapping: false
-                    }).addStyleClass("sapUiTinyMarginTop"));
-                });
-            } catch (e) {
-                oAttachmentBox.addItem(new Text({ text: "Could not load attachments." }));
-            }
+        if (aAttachments.length === 0) {
+          oAttachmentBox.addItem(new Text({ text: "None" }));
+        } else {
+          aAttachments.forEach(oFile => {
+            oAttachmentBox.addItem(new Text({
+              text: oFile.filename || oFile.name || "",
+              tooltip: oFile.filename || oFile.name || "",
+              width: "9rem",
+              wrapping: false
+            }).addStyleClass("sapUiTinyMarginTop"));
+          });
         }
-    }, 0);
+      } catch (e) {
+        console.error("Error loading attachments:", e);
+        oAttachmentBox.addItem(new Text({ text: "None" }));
+      }
+    }
+  }, 0);
 },
         // ADDED 2026-06-27: restricts attachments to a fixed allowlist
         // of file extensions, per user requirement - reported issue
@@ -580,7 +581,7 @@ sap.ui.define([
                 })
                .then(async (oResult) => {
     console.log("=== onSendToS4: requestObject() resolved with:", JSON.stringify(oResult));
-    await this._uploadAttachments(oResult.ClaimId);
+    await this._uploadAttachments(oResult.results || [], oResult.ClaimId);
     this._showResultsAndNavigateBack(oResult);
 
                 })
@@ -596,39 +597,76 @@ sap.ui.define([
                 });
         },
 
-        _uploadAttachments: async function (sClaimId) {
-    const sServiceUrl = this.getOwnerComponent().getModel().getServiceUrl();
+       _uploadAttachments: async function (oResults, sClaimId)  {
+  const oModel = this.getOwnerComponent().getModel();
 
-    for (const [sInvoicenumber, aFiles] of Object.entries(this._oAttachments)) {
-        for (const oFile of aFiles) {
-            try {
-                // Step 1: POST to create the attachment metadata entry
-                const sPostUrl = `${sServiceUrl}ClaimRecords(ClaimId='${sClaimId}',Invoicenumber='${sInvoicenumber}')/attachments`;
-                const oPostResponse = await fetch(sPostUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ filename: oFile.name, mimeType: oFile.type })
-                });
-                if (!oPostResponse.ok) {
-                    console.error("Failed to create attachment entry for", oFile.name);
-                    continue;
-                }
-                const oPostResult = await oPostResponse.json();
-                const sAttachmentId = oPostResult.ID;
+  for (const [sInvoicenumber, aFiles] of Object.entries(this._oAttachments)) {
+    // Find workflowId for this invoice from results
+    const oResult = (oResults || []).find(r => r.Invoicenumber === sInvoicenumber);
+    const sWorkflowId = oResult?.workflowId || "";
 
-                // Step 2: PUT the actual file bytes
-                const sPutUrl = `${sServiceUrl}ClaimRecords(ClaimId='${sClaimId}',Invoicenumber='${sInvoicenumber}')/attachments(ID=${sAttachmentId},up__ClaimId='${sClaimId}',up__Invoicenumber='${sInvoicenumber}')/content`;
-                await fetch(sPutUrl, {
-                    method: "PUT",
-                    headers: { "Content-Type": oFile.type || "application/octet-stream" },
-                    body: oFile
-                });
-            } catch (oError) {
-                console.error("Error uploading attachment", oFile.name, oError);
-                MessageToast.show("Warning: attachment " + oFile.name + " could not be uploaded.");
-            }
-        }
+    if (!sWorkflowId) {
+      console.warn("No workflowId found for invoice", sInvoicenumber);
+      MessageToast.show("Warning: Could not upload attachment — no workflow ID for invoice " + sInvoicenumber);
+      continue;
     }
+
+    for (const oFile of aFiles) {
+      try {
+        // Convert file to Base64
+        const sBase64 = await this._fileToBase64(oFile);
+
+        // Call CAP action directly via fetch (bypass OData batch — file too large)
+const sServiceUrl = "/odata/v4/retention/";
+const oResponse = await fetch(`${sServiceUrl}submitAttachment`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-CSRF-Token": await this._getCsrfToken()
+  },
+  body: JSON.stringify({
+  workflowId: sWorkflowId,
+  claimId: sClaimId,
+  invoicenumber: sInvoicenumber,
+  filename: oFile.name,
+  mimeType: oFile.type || "application/pdf",
+  fileContent: sBase64
+})
+});
+
+if (!oResponse.ok) {
+  throw new Error(`HTTP ${oResponse.status}: ${await oResponse.text()}`);
+}
+        console.log("Attachment uploaded successfully:", oFile.name, "for workflow:", sWorkflowId);
+
+      } catch (oError) {
+        console.error("Error uploading attachment", oFile.name, oError);
+        MessageToast.show("Warning: attachment " + oFile.name + " could not be uploaded to CPI.");
+      }
+    }
+  }
+},
+
+_getCsrfToken: async function () {
+  const oResponse = await fetch("/odata/v4/retention/", {
+    method: "HEAD",
+    headers: { "X-CSRF-Token": "Fetch" }
+  });
+  return oResponse.headers.get("X-CSRF-Token") || "";
+},
+
+// Helper: convert File object to Base64 string
+_fileToBase64: function (oFile) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Remove data URL prefix e.g. "data:application/pdf;base64,"
+      const sBase64 = reader.result.split(",")[1];
+      resolve(sBase64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(oFile);
+  });
 },
 
         // FIXED 2026-06-26: switched from MessageToast to a modal

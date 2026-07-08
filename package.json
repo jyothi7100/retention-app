@@ -29,8 +29,11 @@
       "preview": true
     },
     "server": {
-      "index": true
-    },
+  "index": true,
+  "odata": {
+    "batch-limit": "50mb"
+  }
+},
     "attachments": {
       "scan": true
     },

@@ -87,8 +87,21 @@ service RetentionService {
       success        : Boolean;
       subrc          : String;
       message        : String;
+      workflowId    : String;  // ADD THIS
     };
   };
+
+  action submitAttachment(
+  workflowId  : String,
+  claimId       : String,
+  invoicenumber : String,
+  filename    : String,
+  mimeType    : String,
+  fileContent : LargeString
+) returns {
+  success : Boolean;
+  message : String;
+};
 }
 
 

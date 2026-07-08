@@ -137,9 +137,10 @@ entity ClaimRecords {
       // Result of the S4/CPI submission for this specific record -
       // stored alongside the claim so the outcome is preserved, not
       // just shown transiently in a toast.
+      WorkflowId               : String(20);
+      AttachmentsJson          : LargeString;
       SubmissionSuccess        : Boolean;
       SubmissionSubrc           : String(2);
       SubmissionMessage          : String(255);
-
       CreatedDate                 : DateTime @cds.on.insert: $now;
 }

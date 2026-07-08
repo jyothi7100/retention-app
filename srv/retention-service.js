@@ -139,7 +139,75 @@ module.exports = cds.service.impl(async function () {
   };
 });
 
+this.on("submitAttachment", async (req) => {
+  const { workflowId, claimId, invoicenumber, filename, mimeType, fileContent } = req.data;
 
+  console.log("=== submitAttachment called ===");
+  console.log("=== workflowId:", workflowId);
+  console.log("=== claimId:", claimId);
+  console.log("=== invoicenumber:", invoicenumber);
+  console.log("=== filename:", filename);
+  console.log("=== slug:", `${workflowId}||0||${filename}`);
+
+  if (!workflowId) {
+    return req.reject(400, "WorkflowId is required for attachment upload");
+  }
+
+  try {
+    const { executeHttpRequest } = require("@sap-cloud-sdk/http-client");
+    const slug = `${workflowId}||0||${filename}`;
+
+    const response = await executeHttpRequest(
+      { destinationName: "CPI_RETENTION" },
+      {
+        method: "POST",
+        url: "/http/retentionAttach",
+        headers: {
+          custom: {
+            "Content-Type": mimeType || "application/pdf",
+            "Slug": slug,
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/atom+xml"
+          }
+        },
+        data: fileContent
+      },
+      { fetchCsrfToken: false }
+    );
+
+    console.log("=== CPI attachment response status:", response.status);
+
+    // Store attachment metadata in HANA for display in read-only view
+    if (claimId && invoicenumber) {
+      const db = await cds.connect.to("db");
+      const existing = await db.run(
+        SELECT.one("AttachmentsJson").from("retention.db.ClaimRecords")
+          .where({ ClaimId: claimId, Invoicenumber: invoicenumber })
+      );
+
+      const aExisting = JSON.parse(existing?.AttachmentsJson || "[]");
+      aExisting.push({ filename, mimeType });
+
+      await db.run(
+        UPDATE("retention.db.ClaimRecords")
+          .where({ ClaimId: claimId, Invoicenumber: invoicenumber })
+          .with({ AttachmentsJson: JSON.stringify(aExisting) })
+      );
+      console.log("=== Attachment metadata saved to HANA");
+    }
+
+    return {
+      success: true,
+      message: `Attachment ${filename} uploaded successfully`
+    };
+
+  } catch (err) {
+    console.error("=== submitAttachment ERROR:", err.message);
+    console.error("=== CPI response status:", err.response?.status);
+    console.error("=== CPI response data:", JSON.stringify(err.response?.data));
+    return req.reject(500, `Failed to upload attachment: ${err.message}`);
+  }
+});
 
   // ---------------------------------------------------------------
   // Submit Claim action
@@ -274,11 +342,15 @@ module.exports = cds.service.impl(async function () {
         const p = parsed.entry.content["m:properties"];
         const subrc = p["d:Subrc"];
         const message = p["d:Message"] || "";
+        // Extract workflow ID from message like "000017203964 request created successfully"
+          const workflowIdMatch = message.match(/^(\d+)\s+request created successfully/);
+          const workflowId = workflowIdMatch ? workflowIdMatch[1] : "";
         return {
           Invoicenumber: record.Invoicenumber,
           success: subrc === "00",
           subrc: subrc || "",
-          message: message
+          message: message,
+          workflowId: workflowId  // ADD THIS
         };
       });
     } catch (err) {
@@ -316,18 +388,19 @@ module.exports = cds.service.impl(async function () {
     const aRowsToInsert = aSucceededRecords.map(record => {
       const oResult = aResults.find(r => r.Invoicenumber === record.Invoicenumber);
       return {
-        ClaimId: sClaimId,
-        ClaimSequence: iNextSequence,
-        Invoicenumber: record.Invoicenumber,
-        Invoiceyear: record.Invoiceyear,
-        Companycode: record.Companycode,
-        Accountingdocument: record.Accountingdocument,
-        Fiscalyear: record.Fiscalyear,
-        Purchaseorder: record.Purchaseorder,
-        SubmissionSuccess: true,
-        SubmissionSubrc: oResult.subrc || "",
-        SubmissionMessage: oResult.message || ""
-      };
+  ClaimId: sClaimId,
+  ClaimSequence: iNextSequence,
+  Invoicenumber: record.Invoicenumber,
+  Invoiceyear: record.Invoiceyear,
+  Companycode: record.Companycode,
+  Accountingdocument: record.Accountingdocument,
+  Fiscalyear: record.Fiscalyear,
+  Purchaseorder: record.Purchaseorder,
+  WorkflowId: oResult.workflowId || "",
+  SubmissionSuccess: true,
+  SubmissionSubrc: oResult.subrc || "",
+  SubmissionMessage: oResult.message || ""
+};
     });
 
     // Skip the INSERT entirely if nothing succeeded - calling INSERT

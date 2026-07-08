@@ -27,22 +27,25 @@
         "$XSAPPNAME.SupplierUser"
       ],
       "attribute-references": [
-        "anid"
+        {
+          "name": "anid",
+          "default-values": ["*"]
+        }
       ]
     }
   ],
   "attributes": [
-    {
-      "name": "anid",
-      "description": "Ariba Network ID",
-       "valueType": "string",
-      "valueRequired": true
-    }
-  ],
+  {
+    "name": "anid",
+    "description": "Ariba Network ID",
+    "valueType": "string",
+    "valueRequired": false
+  }
+],
   "oauth2-configuration": {
     "redirect-uris": [
       "https://*.us10-001.hana.ondemand.com/**",
       "https://*.ae01.hana.ondemand.com/**"
-       ]
-}
+    ]
+  }
 }
