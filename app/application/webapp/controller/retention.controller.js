@@ -459,11 +459,14 @@ sap.ui.define([
         },
 
         _updateSelectionState: function (table) {
-            this._aSelectedItems = table.getSelectedItems().map(item => item.getBindingContext().getObject());
-            if (this._aSelectedItems.length === 0) {
-                this._sLockedPO = null;
-            }
-        },
+  this._aSelectedItems = table.getSelectedItems()
+    .filter(item => item.getBindingContext("retentionList") !== null)
+    .map(item => item.getBindingContext("retentionList").getObject());
+  
+  if (this._aSelectedItems.length === 0) {
+    this._sLockedPO = null;
+  }
+},
 
         // ---------------------------------------------------------
         // Submit Claim button handler
