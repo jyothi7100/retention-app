@@ -82,7 +82,7 @@
           <Column id="_IDGenColumn1"><Text id="_IDGenText1" text="Invoice"/></Column>
           <Column id="_IDGenColumn2"><Text id="_IDGenText2" text="Description"/></Column>
           <Column id="_IDGenColumn3"><Text id="_IDGenText3" text="Invoice Date"/></Column>
-          <Column id="_IDGenColumn4"><Text id="_IDGenText4" text="Net Value"/></Column>
+          <Column id="_IDGenColumn4"><Text id="_IDGenText4" text="Invoice Value"/></Column>
           <Column id="_IDGenColumn6"><Text id="_IDGenText6" text="Retention Amount"/></Column>
           <Column id="_IDGenColumn7"><Text id="_IDGenText7" text="Due Date"/></Column>
           <Column id="_IDGenColumn8"><Text id="_IDGenText8" text="Status"/></Column>

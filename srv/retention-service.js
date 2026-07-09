@@ -93,6 +93,20 @@ module.exports = cds.service.impl(async function () {
     const mapped = entries.map(e => {
       const p = e.content["m:properties"];
 
+      // Temporary debug - remove after fixing
+if (p["d:Rtcleardocument"] || p["d:Paydocument"] || p["d:Workflow"]) {
+  console.log("=== Record fields ===", {
+    Invoicenumber: p["d:Invoicenumber"],
+    Rtcleardocument: p["d:Rtcleardocument"],
+    Paydocument: p["d:Paydocument"],
+    Workflow: p["d:Workflow"],
+    Docstatus: p["d:Docstatus"],
+    Level: p["d:Level"],
+    Netduedate: p["d:Netduedate"],
+    DerivedStatus: deriveStatus(p)
+  });
+}
+
       return {
         Invoicenumber: p["d:Invoicenumber"],
         Invoiceyear: p["d:Invoiceyear"],
@@ -311,14 +325,14 @@ const cpiResponse = await executeHttpRequest(
       custom: {
         "Content-Type": "application/atom+xml",
         "Accept": "application/atom+xml",
-        "X-Requested-With": "XMLHttpRequest"
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-Token": "unsafe"
       }
     },
     data: sXmlPayload
   },
   { fetchCsrfToken: false }
 );
-
 const response = cpiResponse.data;
 
     console.log("=== submitClaimWithAttachments: CPI call returned ===");

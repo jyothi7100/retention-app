@@ -556,11 +556,27 @@ sap.ui.define([
         },
 
         formatRowSelectable: function (sFinalStatus, sInvoicenumber) {
-            if (this._oClaimMap && this._oClaimMap[sInvoicenumber] && sFinalStatus === "Due for Refund") {
-                return "Inactive";
-            }
-            return "Active";
-        },
+  // Retained status — not yet eligible for claim
+  if (sFinalStatus === "Retained") {
+    return "Inactive";
+  }
+  // Already claimed — prevent duplicate claim
+  if (this._oClaimMap && this._oClaimMap[sInvoicenumber] && sFinalStatus === "Due for Refund") {
+    return "Inactive";
+  }
+  return "Active";
+},
+formatDate: function (sDate) {
+  if (!sDate) return "";
+  const oDate = new Date(sDate);
+  if (isNaN(oDate.getTime())) return sDate;
+  const aMonths = ["Jan","Feb","Mar","Apr","May","Jun",
+                   "Jul","Aug","Sep","Oct","Nov","Dec"];
+  const sDay = oDate.getDate();
+  const sMonth = aMonths[oDate.getMonth()];
+  const sYear = oDate.getFullYear();
+  return `${sDay} ${sMonth} ${sYear}`;
+},
 
         // ---------------------------------------------------------
         // Claim ID Link Formatters + Press Handler

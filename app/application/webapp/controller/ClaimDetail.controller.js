@@ -554,6 +554,12 @@ sap.ui.define([
         // file METADATA (name/size/type, not the file bytes - see the
         // ClaimRecords entity comment for why) alongside its row.
         onSendToS4: function () {
+
+            // ← ADD THIS
+  console.log("=== Records being claimed ===");
+  this._aRecords.forEach(r => {
+    console.log(`Invoice: ${r.Invoicenumber} | Netamount: ${r.Netamount} | Retentionamount: ${r.Retentionamount} | PO: ${r.Purchaseorder} | Currency: ${r.Currency}`);
+  });
             const oPage = this.byId("claimDetailPage");
             oPage.setBusy(true);
 
