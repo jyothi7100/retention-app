@@ -82,7 +82,7 @@
         }
       },
       "[production]": {
-        "auth": "xsuaa",
+        "auth": "dummy",
         "db": {
           "kind": "hana"
         },

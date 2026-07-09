@@ -67,8 +67,8 @@ module.exports = cds.service.impl(async function () {
   const { RetentionList } = this.entities;
 
   this.on("READ", RetentionList, async (req) => {
-    const supplier = req.data.Supplier || "0000100091";
-    const fiscal = req.data.Fiscalyear || "2021";
+    const supplier = req.data.Supplier || "0000100840";
+    const fiscal = req.data.Fiscalyear || "2026";
 
     const dest = await cds.connect.to("CPI_RETENTION");
 
@@ -140,22 +140,22 @@ module.exports = cds.service.impl(async function () {
 });
 
 this.on("submitAttachment", async (req) => {
-  const { workflowId, claimId, invoicenumber, filename, mimeType, fileContent } = req.data;
+  const { workflowId, claimId, invoicenumber, sequence, filename, mimeType, fileContent } = req.data;
 
   console.log("=== submitAttachment called ===");
   console.log("=== workflowId:", workflowId);
   console.log("=== claimId:", claimId);
   console.log("=== invoicenumber:", invoicenumber);
   console.log("=== filename:", filename);
-  console.log("=== slug:", `${workflowId}||0||${filename}`);
-
+  console.log("=== slug:", `${workflowId}||${sequence || 0}||${filename}`);
+  console.log("=== sequence received:", sequence);
   if (!workflowId) {
     return req.reject(400, "WorkflowId is required for attachment upload");
   }
 
   try {
     const { executeHttpRequest } = require("@sap-cloud-sdk/http-client");
-    const slug = `${workflowId}||0||${filename}`;
+    const slug = `${workflowId}||${sequence || 0}||${filename}`;
 
     const response = await executeHttpRequest(
       { destinationName: "CPI_RETENTION" },
@@ -247,197 +247,201 @@ this.on("submitAttachment", async (req) => {
   // per-record POSTs to CPI as before, and persists ONE ClaimRecords
   // row per record (sharing that ClaimId) with the S4 result AND that
   // record's attachment file metadata.
-  this.on("submitClaimWithAttachments", async (req) => {
-    const { records } = req.data;
-    const dest = await cds.connect.to("CPI_RETENTION");
-    const { ClaimRecords } = this.entities;
+ this.on("submitClaimWithAttachments", async (req) => {
+  const { records } = req.data;
 
-    // CHANGED 2026-06-26: ClaimId is now a sequential, human-readable
-    // string ("RTAClaim-1", "RTAClaim-2", ...) instead of a UUID, per
-    // user requirement (it needs to display as a clickable reference
-    // on the dashboard). The next number is computed via
-    // SELECT MAX(ClaimSequence) + 1 - see the ClaimRecords entity
-    // comment in db/schema.cds for why this approach (rather than a
-    // true HANA-native sequence) was chosen, and its limitation under
-    // true concurrent access.
-    const oMaxResult = await cds.tx(req).run(
-      SELECT.one.from(ClaimRecords).columns("ClaimSequence").orderBy("ClaimSequence desc")
-    );
-    const iNextSequence = (oMaxResult && oMaxResult.ClaimSequence ? oMaxResult.ClaimSequence : 0) + 1;
-    const sClaimId = "RTClaim-" + iNextSequence;
+  if (!records || records.length === 0) {
+    return req.reject(400, "No records provided");
+  }
 
-    const sBody = records.map(record =>
-      `<entry xmlns="http://www.w3.org/2005/Atom" ` +
-      `xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" ` +
-      `xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices">` +
-      `<category term="ZMM_RETENTION_LIST_SRV.List" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme"/>` +
-      `<content type="application/xml">` +
-      `<m:properties>` +
-      `<d:Invoicenumber>${escapeXml(record.Invoicenumber)}</d:Invoicenumber>` +
-      `<d:Invoiceyear>${escapeXml(record.Invoiceyear)}</d:Invoiceyear>` +
-      `<d:Companycode>${escapeXml(record.Companycode)}</d:Companycode>` +
-      `<d:Accountingdocument>${escapeXml(record.Accountingdocument)}</d:Accountingdocument>` +
-      `<d:Fiscalyear>${escapeXml(record.Fiscalyear)}</d:Fiscalyear>` +
-      `<d:Purchaseorder>${escapeXml(record.Purchaseorder)}</d:Purchaseorder>` +
-      `</m:properties>` +
-      `</content>` +
-      `</entry>`
-    ).join("");
+  const sPurchaseorder = records[0].Purchaseorder;
+  const sAnid = req.user?.attr?.anid || "";
 
-    let aResults;
+  console.log("=== submitClaimWithAttachments: sending", records.length, "records for PO", sPurchaseorder);
 
-    console.log("=== submitClaimWithAttachments: about to call CPI ===");
-    try {
-      const response = await dest.send({
-        method: "POST",
-        path: "/http/retentionclaim?client=100",
-        headers: {
-          "Accept": "application/xml",
-          "Content-Type": "application/atom+xml",
-          "sap-client": "100"
-        },
-        data: sBody
+  // Build inline ListSet entries for all records
+  const sListSetEntries = records.map(record => `
+        <entry>
+          <content type="application/xml">
+            <m:properties>
+              <d:Invoicenumber>${record.Invoicenumber}</d:Invoicenumber>
+              <d:Invoiceyear>${record.Invoiceyear}</d:Invoiceyear>
+              <d:Companycode>${record.Companycode}</d:Companycode>
+              <d:Accountingdocument>${record.Accountingdocument}</d:Accountingdocument>
+              <d:Fiscalyear>${record.Fiscalyear}</d:Fiscalyear>
+              <d:Purchaseorder>${record.Purchaseorder}</d:Purchaseorder>
+            </m:properties>
+          </content>
+        </entry>`).join("\n");
+
+  // Build deep entity XML payload
+  const sXmlPayload = `<?xml version="1.0" encoding="utf-8"?>
+<entry xmlns="http://www.w3.org/2005/Atom"
+       xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"
+       xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices">
+  <category term="ZMM_RETENTION_LIST_SRV.listHeader"
+            scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme"/>
+  <content type="application/xml">
+    <m:properties>
+      <d:Purchaseorder>${sPurchaseorder}</d:Purchaseorder>
+      <d:Anid>${sAnid}</d:Anid>
+    </m:properties>
+  </content>
+  <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/ListSet"
+        type="application/atom+xml;type=feed"
+        title="ListSet">
+    <m:inline>
+      <feed>
+        ${sListSetEntries}
+      </feed>
+    </m:inline>
+  </link>
+</entry>`;
+
+  try {
+    
+    const { executeHttpRequest } = require("@sap-cloud-sdk/http-client");
+
+const cpiResponse = await executeHttpRequest(
+  { destinationName: "CPI_RETENTION" },
+  {
+    method: "POST",
+    url: "/http/retentionclaim",
+    headers: {
+      custom: {
+        "Content-Type": "application/atom+xml",
+        "Accept": "application/atom+xml",
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    },
+    data: sXmlPayload
+  },
+  { fetchCsrfToken: false }
+);
+
+const response = cpiResponse.data;
+
+    console.log("=== submitClaimWithAttachments: CPI call returned ===");
+    console.log("=== About to call CPI ===");
+console.log("=== PO:", sPurchaseorder);
+console.log("=== Records:", JSON.stringify(records));
+console.log("=== XML payload:", sXmlPayload);
+
+    // Parse response XML
+    const json = await xml2js.parseStringPromise(response, {
+      explicitArray: false
+    });
+
+    // Extract header-level result
+    const headerProps = json?.entry?.content?.["m:properties"];
+    const sWorkflow = headerProps?.["d:Workflow"] || "";
+    const sHeaderSubrc = headerProps?.["d:Subrc"] || "";
+    const sHeaderMessage = headerProps?.["d:Message"] || "";
+
+    console.log("=== submitClaimWithAttachments: Workflow:", sWorkflow, "Subrc:", sHeaderSubrc);
+
+    // Extract per-record results from ListSet
+    const oListSetFeed = json?.entry?.link?.["m:inline"]?.feed;
+    const aEntries = oListSetFeed?.entry
+      ? (Array.isArray(oListSetFeed.entry) ? oListSetFeed.entry : [oListSetFeed.entry])
+      : [];
+
+    // Map results per invoice
+    const aResults = records.map(record => {
+      const oEntry = aEntries.find(e => {
+        const p = e?.content?.["m:properties"];
+        return p?.["d:Invoicenumber"] === record.Invoicenumber;
       });
-      console.log("=== submitClaimWithAttachments: CPI call returned ===");
 
-      // IMPORTANT: the response body is NOT well-formed XML on its
-      // own when there are multiple entries - it's multiple sibling
-      // <entry> root elements concatenated together (same structure
-      // as the request), which xml2js (and any standard XML parser)
-      // CANNOT parse directly, since XML requires exactly one root
-      // element. To handle this, the raw response text is split into
-      // individual <entry>...</entry> chunks using a regex BEFORE
-      // attempting to parse each one separately as its own small,
-      // valid XML document - this is a workaround for a payload
-      // shape that isn't standard XML, not standard practice in
-      // general, but matches what this specific endpoint actually
-      // returns.
-      const aEntryChunks = response.match(/<entry[\s\S]*?<\/entry>/g) || [];
-      console.log("=== submitClaimWithAttachments: found", aEntryChunks.length, "entry chunks ===");
+      if (oEntry) {
+        const p = oEntry.content["m:properties"];
+        const sSubrc = p["d:Subrc"] || sHeaderSubrc;
+        const sMessage = p["d:Message"] || sHeaderMessage;
+        const sRecordWorkflow = p["d:Workflow"] || sWorkflow;
+        const workflowIdMatch = sMessage.match(/^(\d+)\s+request created successfully/);
+        const workflowId = workflowIdMatch ? workflowIdMatch[1] : sRecordWorkflow;
 
-      const aParsedEntries = await Promise.all(
-        aEntryChunks.map(sChunk => xml2js.parseStringPromise(sChunk, { explicitArray: false }))
-      );
-      console.log("=== submitClaimWithAttachments: parsed entries ===");
-
-      // Matches each returned entry back to the record it belongs to
-      // BY POSITION (assumes CPI returns entries in the same order
-      // the records were sent in) - not yet confirmed against a real
-      // multi-entry response, since every test so far has used 1
-      // record. If CPI's response entries include
-      // Invoicenumber/Invoiceyear/Companycode (like the single-record
-      // response did), matching by those key fields instead of by
-      // position would be more robust - revisit once a real
-      // multi-record response is seen.
-      aResults = records.map((record, index) => {
-        const parsed = aParsedEntries[index];
-        if (!parsed || !parsed.entry) {
-          return {
-            Invoicenumber: record.Invoicenumber,
-            success: false,
-            subrc: "",
-            message: "No response entry returned for this record."
-          };
-        }
-        const p = parsed.entry.content["m:properties"];
-        const subrc = p["d:Subrc"];
-        const message = p["d:Message"] || "";
-        // Extract workflow ID from message like "000017203964 request created successfully"
-          const workflowIdMatch = message.match(/^(\d+)\s+request created successfully/);
-          const workflowId = workflowIdMatch ? workflowIdMatch[1] : "";
         return {
           Invoicenumber: record.Invoicenumber,
-          success: subrc === "00",
-          subrc: subrc || "",
-          message: message,
-          workflowId: workflowId  // ADD THIS
+          success: sSubrc === "00",
+          subrc: sSubrc,
+          message: sMessage,
+          workflowId: workflowId
+        };
+      } else {
+        // Fall back to header-level result if no per-record entry
+        const workflowIdMatch = sHeaderMessage.match(/^(\d+)\s+request created successfully/);
+        const workflowId = workflowIdMatch ? workflowIdMatch[1] : sWorkflow;
+        return {
+          Invoicenumber: record.Invoicenumber,
+          success: sHeaderSubrc === "00",
+          subrc: sHeaderSubrc,
+          message: sHeaderMessage,
+          workflowId: workflowId
+        };
+      }
+    });
+
+    // Insert into HANA for successful records
+    const aSucceeded = aResults.filter(r => r.success);
+
+    if (aSucceeded.length > 0) {
+      // Get next claim sequence
+      const oLastClaim = await cds.tx(req).run(
+        SELECT.one("ClaimSequence").from("retention.db.ClaimRecords").orderBy("ClaimSequence desc")
+      );
+      const iNextSequence = (oLastClaim?.ClaimSequence || 0) + 1;
+      const sClaimId = `RTClaim-${iNextSequence}`;
+
+      const aRowsToInsert = aSucceeded.map(result => {
+        const record = records.find(r => r.Invoicenumber === result.Invoicenumber);
+        return {
+          ClaimId: sClaimId,
+          ClaimSequence: iNextSequence,
+          Invoicenumber: result.Invoicenumber,
+          Invoiceyear: record.Invoiceyear,
+          Companycode: record.Companycode,
+          Accountingdocument: record.Accountingdocument,
+          Fiscalyear: record.Fiscalyear,
+          Purchaseorder: record.Purchaseorder,
+          WorkflowId: result.workflowId,
+          SubmissionSuccess: true,
+          SubmissionSubrc: result.subrc,
+          SubmissionMessage: result.message
         };
       });
-    } catch (err) {
-      cds.log("retention-service").error(
-        `submitClaimWithAttachments failed for ${records.length} record(s): ${err.message}`
-      );
-      // The whole batch failed (e.g. network error, CPI rejected the
-      // request entirely) - report every record as failed with the
-      // same underlying error, since we have no per-record detail in
-      // this case. Persistence below still happens even in this
-      // case, so the failed attempt is recorded in HANA too, not
-      // silently dropped.
-      aResults = records.map(record => ({
-        Invoicenumber: record.Invoicenumber,
-        success: false,
-        subrc: "",
-        message: "Request to claim submission endpoint failed: " + err.message
-      }));
-    }
 
-    // CHANGED 2026-06-26: persistence now only happens for records
-    // whose S4 submission actually SUCCEEDED (confirmed with user) -
-    // a record that S4 rejected (Subrc != "00") is reported back to
-    // the frontend with its real failure message, but is NOT written
-    // to ClaimRecords at all. This is a deliberate change from the
-    // original behavior (which persisted every record regardless of
-    // outcome, marking failures with SubmissionSuccess=false) - the
-    // ClaimRecords table is now meant to represent only genuinely
-    // accepted claims, not every attempt.
-    const aSucceededRecords = records.filter(record => {
-      const oResult = aResults.find(r => r.Invoicenumber === record.Invoicenumber);
-      return oResult && oResult.success;
-    });
-
-    const aRowsToInsert = aSucceededRecords.map(record => {
-      const oResult = aResults.find(r => r.Invoicenumber === record.Invoicenumber);
-      return {
-  ClaimId: sClaimId,
-  ClaimSequence: iNextSequence,
-  Invoicenumber: record.Invoicenumber,
-  Invoiceyear: record.Invoiceyear,
-  Companycode: record.Companycode,
-  Accountingdocument: record.Accountingdocument,
-  Fiscalyear: record.Fiscalyear,
-  Purchaseorder: record.Purchaseorder,
-  WorkflowId: oResult.workflowId || "",
-  SubmissionSuccess: true,
-  SubmissionSubrc: oResult.subrc || "",
-  SubmissionMessage: oResult.message || ""
-};
-    });
-
-    // Skip the INSERT entirely if nothing succeeded - calling INSERT
-    // with an empty entries array is pointless at best and may not
-    // be well-defined behavior at worst, so this is guarded
-    // explicitly rather than relying on it to silently no-op.
-    //
-    // NOTE: uses cds.tx(req).run(...) rather than the bare global
-    // INSERT.into(...).entries(...) form - the bare global form
-    // failed in earlier testing with "Can't execute query as no
-    // primary database is connected", even though the same server's
-    // startup log clearly showed "connect to db > hana {...}"
-    // succeeding. This is a known category of CAP issue: if @sap/cds
-    // ends up loaded as more than one module instance (not a true
-    // singleton across the whole project's dependency tree), the
-    // bare globals (INSERT, SELECT, cds.entities, etc.) can bind to a
-    // DIFFERENT cds instance than the one actually holding the live
-    // DB connection - see e.g. github.com/cap-js/sdm/issues/59 and
-    // the SAP Community thread on "Not connected to primary
-    // datasource" for the same exact symptom. cds.tx(req).run(...) -
-    // tied explicitly to the current request's transaction - avoids
-    // depending on which global instance happens to be referenced.
-    if (aRowsToInsert.length > 0) {
-      console.log("=== submitClaimWithAttachments: about to INSERT", aRowsToInsert.length, "succeeded record(s) into ClaimRecords ===");
-      await cds.tx(req).run(
-        INSERT.into(ClaimRecords).entries(aRowsToInsert)
-      );
+      console.log("=== submitClaimWithAttachments: about to INSERT", aRowsToInsert.length, "record(s) into ClaimRecords ===");
+      await cds.tx(req).run(INSERT.into("retention.db.ClaimRecords").entries(aRowsToInsert));
       console.log("=== submitClaimWithAttachments: INSERT done, returning result ===");
-    } else {
-      console.log("=== submitClaimWithAttachments: no records succeeded, skipping INSERT entirely ===");
+
+      return {
+        ClaimId: sClaimId,
+        results: aResults
+      };
     }
 
+    // All failed
     return {
-      ClaimId: sClaimId,
+      ClaimId: "",
       results: aResults
     };
-  });
+
+  } catch (err) {
+    console.error("=== submitClaimWithAttachments ERROR:", err.message);
+    const aResults = records.map(record => ({
+      Invoicenumber: record.Invoicenumber,
+      success: false,
+      subrc: "",
+      message: `Request to claim submission endpoint failed: ${err.message}`,
+      workflowId: ""
+    }));
+    return {
+      ClaimId: "",
+      results: aResults
+    };
+  }
+});
 });
 
 // Escapes the 5 characters that are unsafe in XML text content/

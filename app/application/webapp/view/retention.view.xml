@@ -106,7 +106,7 @@
               <Text id="_IDGenText10" text="{= ${retentionList>Invoicenumber} + '-' + ${retentionList>Invoiceyear} + '-' + ${retentionList>Companycode} }"/>
               <Text id="_IDGenText11" text="{retentionList>Invoicenumber}"/>
               <Text id="_IDGenText12" text="{retentionList>Invoicedescription}"/>
-              <Text id="_IDGenText13" text="{retentionList>Invoicedate}"/>
+              <Text id="_IDGenText13" text="{path: 'retentionList>Invoicedate', formatter: '.formatDate'}"/>
               <Text id="_IDGenText14" text="{parts: ['retentionList>Netamount', 'retentionList>Currency'], formatter: '.formatAmountWithCurrency'}"/>
               <Text id="_IDGenText16" text="{parts: ['retentionList>Retentionamount', 'retentionList>Currency'], formatter: '.formatAmountWithCurrency'}"/>
               <Text id="_IDGenText17" text="{retentionList>Netduedate}"/>

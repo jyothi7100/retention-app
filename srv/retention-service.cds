@@ -95,6 +95,7 @@ service RetentionService {
   workflowId  : String,
   claimId       : String,
   invoicenumber : String,
+  sequence      : Integer,
   filename    : String,
   mimeType    : String,
   fileContent : LargeString

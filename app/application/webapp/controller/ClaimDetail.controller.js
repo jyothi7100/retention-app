@@ -597,11 +597,11 @@ sap.ui.define([
                 });
         },
 
-       _uploadAttachments: async function (oResults, sClaimId)  {
+       _uploadAttachments: async function (oResults, sClaimId) {
   const oModel = this.getOwnerComponent().getModel();
+  let iSequence = 0; // Global sequence counter across all invoices and files
 
   for (const [sInvoicenumber, aFiles] of Object.entries(this._oAttachments)) {
-    // Find workflowId for this invoice from results
     const oResult = (oResults || []).find(r => r.Invoicenumber === sInvoicenumber);
     const sWorkflowId = oResult?.workflowId || "";
 
@@ -616,6 +616,9 @@ sap.ui.define([
         // Convert file to Base64
         const sBase64 = await this._fileToBase64(oFile);
 
+        console.log("=== Sending attachment with sequence:", iSequence, "for invoice:", sInvoicenumber, "file:", oFile.name); // ← ADD HERE
+
+
         // Call CAP action directly via fetch (bypass OData batch — file too large)
 const sServiceUrl = "/odata/v4/retention/";
 const oResponse = await fetch(`${sServiceUrl}submitAttachment`, {
@@ -628,6 +631,7 @@ const oResponse = await fetch(`${sServiceUrl}submitAttachment`, {
   workflowId: sWorkflowId,
   claimId: sClaimId,
   invoicenumber: sInvoicenumber,
+  sequence: iSequence,
   filename: oFile.name,
   mimeType: oFile.type || "application/pdf",
   fileContent: sBase64
@@ -637,6 +641,7 @@ const oResponse = await fetch(`${sServiceUrl}submitAttachment`, {
 if (!oResponse.ok) {
   throw new Error(`HTTP ${oResponse.status}: ${await oResponse.text()}`);
 }
+ iSequence++; // ← ADD HERE — after successful upload
         console.log("Attachment uploaded successfully:", oFile.name, "for workflow:", sWorkflowId);
 
       } catch (oError) {
