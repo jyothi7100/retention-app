@@ -50,7 +50,7 @@
           </TileContent>
         </GenericTile>
 
-        <GenericTile id="_IDGenGenericTile4" header="Approved" subheader="Completed" press="onTilePress" tooltip=" ">
+        <GenericTile id="_IDGenGenericTile4" header=" Request Approved" subheader="Completed" press="onTilePress" tooltip=" ">
           <TileContent id="_IDGenTileContent4">
             <NumericContent id="_IDGenNumericContent4" value="{kpi>/ApprovedCount}" icon="sap-icon://accept" valueColor="Good" tooltip=" "/>
           </TileContent>
@@ -78,12 +78,11 @@
           </Toolbar>
         </headerToolbar>
         <columns>
-          <Column id="_IDGenColumn"><Text id="_IDGenText" text="Retention ID"/></Column>
           <Column id="_IDGenColumn1"><Text id="_IDGenText1" text="Invoice"/></Column>
           <Column id="_IDGenColumn2"><Text id="_IDGenText2" text="Description"/></Column>
           <Column id="_IDGenColumn3"><Text id="_IDGenText3" text="Invoice Date"/></Column>
-          <Column id="_IDGenColumn4"><Text id="_IDGenText4" text="Invoice Value"/></Column>
-          <Column id="_IDGenColumn6"><Text id="_IDGenText6" text="Retention Amount"/></Column>
+          <Column id="_IDGenColumn4" hAlign="End"><Text id="_IDGenText4" text="Invoice Value"/></Column>
+          <Column id="_IDGenColumn6" hAlign="End"><Text id="_IDGenText6" text="Retention Amount"/></Column>
           <Column id="_IDGenColumn7"><Text id="_IDGenText7" text="Due Date"/></Column>
           <Column id="_IDGenColumn8"><Text id="_IDGenText8" text="Status"/></Column>
           <Column id="_IDGenColumn9"><Text id="_IDGenText9" text="PO Number"/></Column>
@@ -103,13 +102,12 @@
           <ColumnListItem id="_IDGenColumnListItem"
     type="{parts: ['retentionList>FinalStatus', 'retentionList>Invoicenumber'], formatter: '.formatRowSelectable'}">
             <cells>
-              <Text id="_IDGenText10" text="{= ${retentionList>Invoicenumber} + '-' + ${retentionList>Invoiceyear} + '-' + ${retentionList>Companycode} }"/>
               <Text id="_IDGenText11" text="{retentionList>Invoicenumber}"/>
               <Text id="_IDGenText12" text="{retentionList>Invoicedescription}"/>
               <Text id="_IDGenText13" text="{path: 'retentionList>Invoicedate', formatter: '.formatDate'}"/>
               <Text id="_IDGenText14" text="{parts: ['retentionList>Netamount', 'retentionList>Currency'], formatter: '.formatAmountWithCurrency'}"/>
-              <Text id="_IDGenText16" text="{parts: ['retentionList>Retentionamount', 'retentionList>Currency'], formatter: '.formatAmountWithCurrency'}"/>
-              <Text id="_IDGenText17" text="{retentionList>Netduedate}"/>
+              <Text id="_IDGenText16" textAlign="End" text="{parts: ['retentionList>Retentionamount', 'retentionList>Currency'], formatter: '.formatRetentionAmount'}"/>
+              <Text id="_IDGenText17" text="{path: 'retentionList>Netduedate', formatter: '.formatDate'}"/>
               <ObjectStatus id="_IDGenObjectStatus1"
     text="{parts: ['retentionList>FinalStatus', 'retentionList>Invoicenumber'], formatter: '.formatStatusText'}"
     state="{parts: ['retentionList>FinalStatus', 'retentionList>Invoicenumber'], formatter: '.formatStatusState'}"

@@ -658,6 +658,7 @@ formatDate: function (sDate) {
             return currency ? `${formatted} ${currency}` : formatted;
         },
 
+        
         // Converts SAP's trailing-minus negative number format
         // (e.g. "27890.00-") into a normal JS-parseable number.
         // Leaves already-normal values (numbers, "-27890.00",

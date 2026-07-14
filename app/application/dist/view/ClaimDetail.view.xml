@@ -51,11 +51,11 @@
            can't be done via simple XML bindings. -->
       <Table id="_IDGenClaimRecordsTable" items="{claimRecords>/records}" noDataText="No records selected.">
         <columns>
-          <Column id="_IDGenClaimColRetentionId"><Text id="_IDGenClaimColRetentionIdText" text="Retention ID"/></Column>
+          
           <Column id="_IDGenClaimColInvoice"><Text id="_IDGenClaimColInvoiceText" text="Invoice"/></Column>
           <Column id="_IDGenClaimColDescription"><Text id="_IDGenClaimColDescriptionText" text="Description"/></Column>
           <Column id="_IDGenClaimColInvoiceDate"><Text id="_IDGenClaimColInvoiceDateText" text="Invoice Date"/></Column>
-          <Column id="_IDGenClaimColNetValue"><Text id="_IDGenClaimColNetValueText" text="Net Value"/></Column>
+          <Column id="_IDGenClaimColNetValue"><Text id="_IDGenClaimColNetValueText" text="Invoice Value"/></Column>
           <Column id="_IDGenClaimColRetentionAmount"><Text id="_IDGenClaimColRetentionAmountText" text="Retention Amount"/></Column>
           <Column id="_IDGenClaimColDueDate"><Text id="_IDGenClaimColDueDateText" text="Due Date"/></Column>
           <Column id="_IDGenClaimColStatus"><Text id="_IDGenClaimColStatusText" text="Status"/></Column>
@@ -64,13 +64,13 @@
         <items>
           <ColumnListItem id="_IDGenClaimColumnListItem">
             <cells>
-              <Text id="_IDGenClaimCellRetentionId" text="{= ${claimRecords>Invoicenumber} + '-' + ${claimRecords>Invoiceyear} + '-' + ${claimRecords>Companycode} }"/>
+              
               <Text id="_IDGenClaimCellInvoice" text="{claimRecords>Invoicenumber}"/>
               <Text id="_IDGenClaimCellDescription" text="{claimRecords>Invoicedescription}"/>
-              <Text id="_IDGenClaimCellInvoiceDate" text="{claimRecords>Invoicedate}"/>
+              <Text id="_IDGenClaimCellInvoiceDate" text="{path: 'claimRecords>Invoicedate', formatter: '.formatDate'}"/>
               <Text id="_IDGenClaimCellNetValue" text="{parts: [{path: 'claimRecords>Netamount'}, {path: 'claimRecords>Currency'}], formatter: '.formatAmountWithCurrency'}"/>
-              <Text id="_IDGenClaimCellRetentionAmount" text="{parts: [{path: 'claimRecords>Retentionamount'}, {path: 'claimRecords>Currency'}], formatter: '.formatAmountWithCurrency'}"/>
-              <Text id="_IDGenClaimCellDueDate" text="{claimRecords>Netduedate}"/>
+              <Text id="_IDGenClaimCellRetentionAmount" text="{parts: [{path: 'claimRecords>Retentionamount'}, {path: 'claimRecords>Currency'}], formatter: '.formatRetentionAmount'}"/>
+              <Text id="_IDGenClaimCellDueDate" text="{path: 'claimRecords>Netduedate', formatter: '.formatDate'}"/>
               <Text id="_IDGenClaimCellStatus" text="{parts: [{path: 'claimRecords>FinalStatus'}, {path: 'claimRecords>Invoicenumber'}], formatter: '.formatStatusText'}"/>
               <!-- CHANGED 2026-06-26: removed the PO Number cell -
                    redundant on this page, since every record shown

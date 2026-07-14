@@ -658,6 +658,22 @@ formatDate: function (sDate) {
             return currency ? `${formatted} ${currency}` : formatted;
         },
 
+        formatRetentionAmount: function (amount, currency) {
+  if (amount === undefined || amount === null || amount === "") {
+    return "";
+  }
+  const numericValue = Math.abs(this._normalizeSapNumber(amount));
+  if (isNaN(numericValue)) {
+    return "";
+  }
+  const oNumberFormat = NumberFormat.getFloatInstance({
+    minFractionDigits: 2,
+    maxFractionDigits: 2,
+    groupingEnabled: true
+  });
+  const formatted = oNumberFormat.format(numericValue);
+  return currency ? `${formatted} ${currency}` : formatted;
+},
         // Converts SAP's trailing-minus negative number format
         // (e.g. "27890.00-") into a normal JS-parseable number.
         // Leaves already-normal values (numbers, "-27890.00",

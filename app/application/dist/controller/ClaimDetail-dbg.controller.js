@@ -570,13 +570,27 @@ sap.ui.define([
            
 
             oAction.setParameter("records", this._aRecords.map(record => ({
-                Invoicenumber: record.Invoicenumber,
-                Invoiceyear: record.Invoiceyear,
-                Companycode: record.Companycode,
-                Accountingdocument: record.Accountingdocument,
-                Fiscalyear: record.Fiscalyear,
-                Purchaseorder: record.Purchaseorder
-            })));
+    Invoicenumber: record.Invoicenumber,
+    Invoiceyear: record.Invoiceyear,
+    Companycode: record.Companycode,
+    Accountingdocument: record.Accountingdocument,
+    Fiscalyear: record.Fiscalyear,
+    Purchaseorder: record.Purchaseorder,
+    // ADDED — were missing from the action payload entirely, even
+    // though this._aRecords already carries them (they come straight
+    // through from the RetentionList row via onSubmitClaim's
+    // table.getSelectedItems().map(...getObject()) call, with no
+    // reshaping in between) - the CDS action parameter type for
+    // "records" now also declares these six fields, so the backend
+    // was ready to receive them but the frontend was never sending
+    // them.
+    Invoicedate: record.Invoicedate,
+    Netduedate: record.Netduedate,
+    Netamount: record.Netamount,
+    Retentionamount: record.Retentionamount,
+    Currency: record.Currency,
+    Invoicedescription: record.Invoicedescription
+})));
            
 
             console.log("=== onSendToS4: about to invoke action ===");
@@ -769,6 +783,33 @@ _fileToBase64: function (oFile) {
                 return Number("-" + str.slice(0, -1));
             }
             return Number(str);
-        }
+        },
+        formatDate: function (sDate) {
+  if (!sDate) return "";
+  const oDate = new Date(sDate);
+  if (isNaN(oDate.getTime())) return sDate;
+  const aMonths = ["Jan","Feb","Mar","Apr","May","Jun",
+                   "Jul","Aug","Sep","Oct","Nov","Dec"];
+  const sDay = oDate.getDate();
+  const sMonth = aMonths[oDate.getMonth()];
+  const sYear = oDate.getFullYear();
+  return `${sDay} ${sMonth} ${sYear}`;
+},
+formatRetentionAmount: function (amount, currency) {
+  if (amount === undefined || amount === null || amount === "") {
+    return "";
+  }
+  const numericValue = Math.abs(this._normalizeSapNumber(amount));
+  if (isNaN(numericValue)) {
+    return "";
+  }
+  const oNumberFormat = NumberFormat.getFloatInstance({
+    minFractionDigits: 2,
+    maxFractionDigits: 2,
+    groupingEnabled: true
+  });
+  const formatted = oNumberFormat.format(numericValue);
+  return currency ? `${formatted} ${currency}` : formatted;
+},
     });
 });

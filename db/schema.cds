@@ -120,6 +120,7 @@ entity RetentionList {
 entity ClaimRecords {
   key ClaimId         : String(30);
   key Invoicenumber   : String(10);
+  RetentionId          : String(50);
 
       ClaimSequence       : Integer;
       Invoiceyear           : String(4);
@@ -127,6 +128,12 @@ entity ClaimRecords {
       Accountingdocument        : String(10);
       Fiscalyear                  : String(4);
       Purchaseorder                  : String(10);
+      Invoicedate          : DateTime;
+      Netduedate           : DateTime;
+      Netamount            : String(20);
+      Retentionamount      : String(20);
+      Currency             : String(5);
+      Invoicedescription   : String(255);
 
       // JSON-encoded array of { name, size, type } objects - the
       // names of files attached to THIS SPECIFIC record within the

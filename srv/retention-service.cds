@@ -72,13 +72,19 @@ service RetentionService {
   // Invoicenumber (one record can have several files).
   action submitClaimWithAttachments(
     records: array of {
-      Invoicenumber       : String;
-      Invoiceyear          : String;
-      Companycode           : String;
-      Accountingdocument     : String;
-      Fiscalyear              : String;
-      Purchaseorder            : String;
-    }
+  Invoicenumber       : String;
+  Invoiceyear         : String;
+  Companycode         : String;
+  Accountingdocument  : String;
+  Fiscalyear          : String;
+  Purchaseorder       : String;
+  Invoicedate         : DateTime;
+  Netduedate          : DateTime;
+  Netamount           : String;
+  Retentionamount     : String;
+  Currency            : String;
+  Invoicedescription  : String;
+}
     
   ) returns {
     ClaimId : String;
