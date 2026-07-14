@@ -95,7 +95,7 @@
                Invoicenumber -> ClaimId lookup comes from a separate
                fetch (ClaimRecords), not a field on RetentionList
                itself - see _loadRetentionData. -->
-          <Column id="_IDGenColumnClaimId"><Text id="_IDGenTextClaimId" text="Claim ID"/></Column>
+          <Column id="_IDGenColumnClaimId" width="14rem"><Text id="_IDGenTextClaimId" text="Claim ID"/></Column>
         </columns>
 
         <items>
@@ -115,6 +115,7 @@
               <Text id="_IDGenText18" text="{retentionList>Purchaseorder}"/>
               <Link id="_IDGenClaimIdLink"
     text="{path: 'retentionList>Invoicenumber', formatter: '.formatClaimIdText'}"
+    tooltip="{path: 'retentionList>Invoicenumber', formatter: '.formatClaimIdText'}"
     visible="{path: 'retentionList>Invoicenumber', formatter: '.formatClaimIdVisible', targetType: 'any'}"
     press="onClaimIdPress"/>
             </cells>

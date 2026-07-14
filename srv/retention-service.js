@@ -400,18 +400,29 @@ console.log("=== XML payload:", sXmlPayload);
     const aSucceeded = aResults.filter(r => r.success);
 
     if (aSucceeded.length > 0) {
-      // Get next claim sequence
-      const oLastClaim = await cds.tx(req).run(
-        SELECT.one("ClaimSequence").from("retention.db.ClaimRecords").orderBy("ClaimSequence desc")
-      );
-      const iNextSequence = (oLastClaim?.ClaimSequence || 0) + 1;
-      const sClaimId = `RTClaim-${iNextSequence}`;
+     // CHANGED — ClaimId is no longer generated locally (was
+// `RTClaim-${iNextSequence}`, incrementing off the last row's
+// ClaimSequence). CPI/S4 now returns a real ClaimId of its own in
+// the header-level <m:properties> (distinct from d:Workflow, which
+// is unrelated and still used as-is for WorkflowId) - e.g.
+// "SUSR420000185520260714131041". This is the single source of
+// truth for the claim's identity going forward, so we use it as-is
+// instead of minting our own.
+const sClaimId = headerProps?.["d:ClaimId"] || "";
+
+if (!sClaimId) {
+  // Defensive guard: if CPI/S4 ever returns success (Subrc "00")
+  // without a ClaimId for some reason, we'd otherwise silently
+  // insert rows with an empty ClaimId, which breaks the entity's
+  // composite key (ClaimId, Invoicenumber) and any read-only-view
+  // lookups by ClaimId later.
+  console.error("=== submitClaimWithAttachments: CPI response had no ClaimId ===");
+}
 
       const aRowsToInsert = aSucceeded.map(result => {
         const record = records.find(r => r.Invoicenumber === result.Invoicenumber);
         return {
           ClaimId: sClaimId,
-          ClaimSequence: iNextSequence,
           Invoicenumber: result.Invoicenumber,
           RetentionId: `${record.Invoicenumber}-${record.Invoiceyear}-${record.Companycode}`,
           Invoiceyear: record.Invoiceyear,

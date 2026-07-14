@@ -1,0 +1,314 @@
+Statistical profiling result from isolate-0x1233ed20-147389-v8.log, (661 ticks, 484 unaccounted, 0 excluded).
+
+ [Shared libraries]:
+   ticks  total  nonlib   name
+    120   18.2%          /usr/lib/x86_64-linux-gnu/libc.so.6
+      2    0.3%          [vdso]
+      2    0.3%          /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33
+
+ [JavaScript]:
+   ticks  total  nonlib   name
+      1    0.2%    0.2%  JS: ^splitRoot node:fs:2620:33
+      1    0.2%    0.2%  JS: ^read node:internal/modules/package_json_reader:48:14
+      1    0.2%    0.2%  JS: ^getEncodingOps node:buffer:720:24
+      1    0.2%    0.2%  JS: ^addChunk node:internal/streams/readable:550:18
+      1    0.2%    0.2%  JS: ^_link_required_services /home/user/projects/retention-app/node_modules/@sap/cds/lib/env/cds-env.js:253:27
+      1    0.2%    0.2%  JS: *wrappedFn node:internal/errors:536:21
+      1    0.2%    0.2%  JS: *webidl.converters.ByteString node:internal/deps/undici/undici:4029:44
+      1    0.2%    0.2%  JS: *resolve node:path:1217:10
+
+ [C++]:
+   ticks  total  nonlib   name
+     22    3.3%    4.1%  _IO_fwrite@@GLIBC_2.2.5
+      9    1.4%    1.7%  std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@@GLIBCXX_3.4.9
+      3    0.5%    0.6%  __libc_malloc@@GLIBC_2.2.5
+      2    0.3%    0.4%  __libc_free@@GLIBC_2.2.5
+      2    0.3%    0.4%  _IO_file_xsputn@@GLIBC_2.2.5
+      1    0.2%    0.2%  std::ostream::sentry::sentry(std::ostream&)@@GLIBCXX_3.4
+      1    0.2%    0.2%  std::ostream::operator<<(int)@@GLIBCXX_3.4
+      1    0.2%    0.2%  std::ostream& std::ostream::_M_insert<long>(long)@@GLIBCXX_3.4.9
+      1    0.2%    0.2%  operator delete(void*)@@GLIBCXX_3.4
+      1    0.2%    0.2%  brk@@GLIBC_2.2.5
+      1    0.2%    0.2%  __pthread_rwlock_wrlock@GLIBC_2.2.5
+      1    0.2%    0.2%  __pthread_mutex_lock@GLIBC_2.2.5
+
+ [Summary]:
+   ticks  total  nonlib   name
+      8    1.2%    1.5%  JavaScript
+     45    6.8%    8.4%  C++
+     41    6.2%    7.6%  GC
+    124   18.8%          Shared libraries
+    484   73.2%          Unaccounted
+
+ [C++ entry points]:
+   ticks    cpp   total   name
+     21   52.5%    3.2%  _IO_fwrite@@GLIBC_2.2.5
+      9   22.5%    1.4%  std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@@GLIBCXX_3.4.9
+      3    7.5%    0.5%  __libc_malloc@@GLIBC_2.2.5
+      2    5.0%    0.3%  _IO_file_xsputn@@GLIBC_2.2.5
+      1    2.5%    0.2%  std::ostream::sentry::sentry(std::ostream&)@@GLIBCXX_3.4
+      1    2.5%    0.2%  std::ostream::operator<<(int)@@GLIBCXX_3.4
+      1    2.5%    0.2%  std::ostream& std::ostream::_M_insert<long>(long)@@GLIBCXX_3.4.9
+      1    2.5%    0.2%  __pthread_rwlock_wrlock@GLIBC_2.2.5
+      1    2.5%    0.2%  __libc_free@@GLIBC_2.2.5
+
+ [Bottom up (heavy) profile]:
+  Note: percentage shows a share of a particular caller in the total
+  amount of its parent calls.
+  Callers occupying less than 1.0% are not shown.
+
+   ticks parent  name
+    484   73.2%  UNKNOWN
+    143   29.5%    JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+    139   97.2%      JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+     33   23.7%        JS: ~fetch node:internal/bootstrap/web/exposed-window-or-worker:67:24
+     33  100.0%          JS: ~livereloadURL /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/livereload-server.js:147:29
+     33  100.0%            JS: ~listening /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/livereload-server.js:24:25
+      8    5.8%        JS: ~get node:internal/util:615:17
+      8  100.0%          JS: ~lib/web/fetch/response.js node:internal/deps/undici/undici:9262:30
+      8  100.0%            JS: ^__require node:internal/deps/undici/undici:5:49
+      8    5.8%        JS: ~<anonymous> node:crypto:1:1
+      8  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      8  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      7    5.0%        JS: ~<anonymous> node:http2:1:1
+      7  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      7  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      6    4.3%        JS: ~<anonymous> node:internal/streams/duplex:1:1
+      6  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      6  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      6    4.3%        JS: ~<anonymous> node:https:1:1
+      6  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      6  100.0%            JS: ~compileForPublicLoader node:internal/bootstrap/realm:331:25
+      5    3.6%        JS: ~<anonymous> node:tty:1:1
+      5  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      5  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      5    3.6%        JS: ~<anonymous> node:tls:1:1
+      5  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      5  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      5    3.6%        JS: ~<anonymous> node:internal/fs/promises:1:1
+      5  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      5  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      4    2.9%        JS: ~<anonymous> node:stream:1:1
+      4  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      4  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      4    2.9%        JS: ~<anonymous> node:net:1:1
+      4  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      4  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      3    2.2%        JS: ~get node:fs:3302:8
+      3  100.0%          JS: ~<anonymous> /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/watcher.js:108:9
+      3  100.0%            JS: ~_startWatch /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/watcher.js:105:25
+      3    2.2%        JS: ~<anonymous> node:internal/cluster/primary:1:1
+      3  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      3    2.2%        JS: ~<anonymous> node:_http_server:1:1
+      3  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      3  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~resolveExports node:internal/modules/cjs/loader:628:24
+      2  100.0%          JS: ^Module._findPath node:internal/modules/cjs/loader:663:28
+      2  100.0%            JS: ~Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      2    1.4%        JS: ~<anonymous> node:worker_threads:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/webstreams/readablestream:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/tls/secure-context:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/streams/operators:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/http2/core:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/http2/compat:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/crypto/hkdf:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:internal/child_process:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:child_process:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      2    1.4%        JS: ~<anonymous> node:assert:1:1
+      2  100.0%          JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      2  100.0%            JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      3    2.1%      JS: ^compileForPublicLoader node:internal/bootstrap/realm:331:25
+      3  100.0%        JS: ^loadBuiltinModule node:internal/modules/helpers:99:27
+      2   66.7%          JS: ~Module._load node:internal/modules/cjs/loader:1003:24
+      2  100.0%            JS: ^Module.require node:internal/modules/cjs/loader:1281:36
+      1   33.3%          JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+      1  100.0%            JS: ^Module.require node:internal/modules/cjs/loader:1281:36
+     55   11.4%    JS: ^wrapSafe node:internal/modules/cjs/loader:1422:18
+     55  100.0%      JS: ^Module._compile node:internal/modules/cjs/loader:1483:37
+     55  100.0%        JS: ^Module._extensions..js node:internal/modules/cjs/loader:1604:37
+     55  100.0%          JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+     55  100.0%            JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+     10    2.1%    JS: ^read node:internal/modules/package_json_reader:48:14
+     10  100.0%      JS: ^readPackage node:internal/modules/package_json_reader:140:21
+      9   90.0%        JS: ^resolveExports node:internal/modules/cjs/loader:628:24
+      9  100.0%          JS: ^Module._findPath node:internal/modules/cjs/loader:663:28
+      9  100.0%            JS: ^Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      1   10.0%        JS: ^readPackageScope node:internal/modules/package_json_reader:149:26
+      1  100.0%          JS: ^trySelf node:internal/modules/cjs/loader:586:17
+      1  100.0%            JS: ^Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      9    1.9%    JS: ~wrapSafe node:internal/modules/cjs/loader:1422:18
+      9  100.0%      JS: ~Module._compile node:internal/modules/cjs/loader:1483:37
+      6   66.7%        JS: ~Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      3   50.0%          JS: ~Module.load node:internal/modules/cjs/loader:1257:33
+      3  100.0%            JS: ~Module._load node:internal/modules/cjs/loader:1003:24
+      3   50.0%          JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+      3  100.0%            JS: ~Module._load node:internal/modules/cjs/loader:1003:24
+      3   33.3%        JS: ^Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      3  100.0%          JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+      2   66.7%            JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+      1   33.3%            JS: ~Module._load node:internal/modules/cjs/loader:1003:24
+      7    1.4%    JS: ^stat node:internal/modules/cjs/loader:229:14
+      4   57.1%      JS: ^Module._findPath node:internal/modules/cjs/loader:663:28
+      4  100.0%        JS: ^Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      4  100.0%          JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+      4  100.0%            JS: ^Module.require node:internal/modules/cjs/loader:1281:36
+      3   42.9%      JS: ^tryFile node:internal/modules/cjs/loader:519:17
+      3  100.0%        JS: ^tryExtensions node:internal/modules/cjs/loader:534:23
+      3  100.0%          JS: ^Module._findPath node:internal/modules/cjs/loader:663:28
+      3  100.0%            JS: ^Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      6    1.2%    JS: ~isIPv6 node:internal/net:38:16
+      6  100.0%      JS: ~isIP node:internal/net:45:14
+      4   66.7%        JS: ~lookup node:dns:143:16
+      4  100.0%          JS: ~lookupAndListen node:net:2127:25
+      4  100.0%            JS: ~Server.listen node:net:2006:35
+      2   33.3%        JS: ~onlookup node:dns:109:18
+      5    1.0%    JS: ~TLSSocket.getPeerCertificate node:_tls_wrap:1137:50
+      5  100.0%      JS: ~onConnectSecure node:_tls_wrap:1685:25
+      5  100.0%        JS: ^emit node:events:471:44
+      5  100.0%          JS: ~TLSSocket._finishInit node:_tls_wrap:1071:43
+      5  100.0%            JS: ~ssl.onhandshakedone node:_tls_wrap:881:27
+
+    120   18.2%  /usr/lib/x86_64-linux-gnu/libc.so.6
+      2    1.7%    JS: ~realpathSync node:fs:2664:22
+      2  100.0%      JS: ~toRealPath node:internal/modules/helpers:57:20
+      2  100.0%        JS: ~Module._findPath node:internal/modules/cjs/loader:663:28
+      2  100.0%          JS: ~resolveMainPath node:internal/modules/run_main:23:25
+      2  100.0%            JS: ~executeUserEntryPoint node:internal/modules/run_main:155:31
+
+     22    3.3%  _IO_fwrite@@GLIBC_2.2.5
+      3   13.6%    JS: ~setSourceMapsEnabled node:internal/source_map/source_map_cache:56:30
+      3  100.0%      JS: ~initializeSourceMapsHandlers node:internal/process/pre_execution:718:38
+      3  100.0%        JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      3  100.0%          JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      3  100.0%            JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      2    9.1%    JS: ~value node:internal/console/constructor:338:20
+      2  100.0%      JS: ~log node:internal/console/constructor:377:6
+      2  100.0%        JS: ~log /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:110:15
+      2  100.0%          JS: ~watch /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:103:22
+      2  100.0%            JS: ~exec /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/cds.js:30:14
+      2    9.1%    JS: ~value node:internal/console/constructor:275:20
+      2  100.0%      JS: ~log node:internal/console/constructor:377:6
+      2  100.0%        JS: ~log /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:110:15
+      2  100.0%          JS: ~watch /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:103:22
+      2  100.0%            JS: ~exec /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/cds.js:30:14
+      2    9.1%    JS: ~toRealPath node:internal/modules/helpers:57:20
+      2  100.0%      JS: ~Module._findPath node:internal/modules/cjs/loader:663:28
+      2  100.0%        JS: ~resolveMainPath node:internal/modules/run_main:23:25
+      2  100.0%          JS: ~executeUserEntryPoint node:internal/modules/run_main:155:31
+      2  100.0%            JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      2    9.1%    JS: ~patchProcessObject node:internal/process/pre_execution:223:28
+      2  100.0%      JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      2  100.0%        JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      2  100.0%          JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    4.5%    JS: ~setupDebugEnv node:internal/process/pre_execution:417:23
+      1  100.0%      JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      1  100.0%        JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      1  100.0%          JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    4.5%    JS: ~initializeESMLoader node:internal/process/pre_execution:701:29
+      1  100.0%      JS: ~setupUserModules node:internal/process/pre_execution:190:26
+      1  100.0%        JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      1  100.0%          JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      1  100.0%            JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    4.5%    JS: ~initializeCJSLoader node:internal/process/pre_execution:696:29
+      1  100.0%      JS: ~setupUserModules node:internal/process/pre_execution:190:26
+      1  100.0%        JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      1  100.0%          JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      1  100.0%            JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    4.5%    JS: ~createHttpErrorConstructor /extbin/globals/bun/global/install/node_modules/http-errors/index.js:112:37
+      1  100.0%      JS: ~<anonymous> /extbin/globals/bun/global/install/node_modules/http-errors/index.js:1:1
+      1  100.0%        JS: ^Module._compile node:internal/modules/cjs/loader:1483:37
+      1  100.0%          JS: ^Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      1  100.0%            JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+      1    4.5%    JS: ~connect node:internal/deps/undici/undici:2640:53
+      1  100.0%      JS: ~socket node:internal/deps/undici/undici:8031:42
+      1  100.0%        JS: ~connect node:internal/deps/undici/undici:8004:27
+      1  100.0%          JS: ~_resume node:internal/deps/undici/undici:8132:21
+      1  100.0%            JS: ~resume node:internal/deps/undici/undici:8118:20
+      1    4.5%    JS: ~Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      1  100.0%      JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+      1  100.0%        JS: ~Module._load node:internal/modules/cjs/loader:1003:24
+      1  100.0%          JS: ^Module.require node:internal/modules/cjs/loader:1281:36
+      1  100.0%            JS: ^require node:internal/modules/helpers:180:31
+      1    4.5%    JS: ~<anonymous> node:internal/validators:442:45
+      1  100.0%      JS: *wrappedFn node:internal/errors:536:21
+      1  100.0%        JS: ^addEventListener node:internal/event_target:598:19
+      1  100.0%          JS: ~watch node:internal/fs/watchers:304:22
+      1  100.0%            JS: ~_watch node:internal/fs/promises:1253:23
+      1    4.5%    JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1    4.5%    JS: ~<anonymous> node:internal/abort_controller:1:1
+      1  100.0%      JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1  100.0%        JS: ^requireBuiltin node:internal/bootstrap/realm:420:24
+      1  100.0%          JS: ~<anonymous> node:internal/streams/operators:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+      1    4.5%    JS: ^load /home/user/projects/retention-app/node_modules/@sap/cds/lib/env/cds-env.js:114:8
+      1  100.0%      JS: ^#import /home/user/projects/retention-app/node_modules/@sap/cds/lib/env/cds-env.js:108:11
+      1  100.0%        JS: ~Config /home/user/projects/retention-app/node_modules/@sap/cds/lib/env/cds-env.js:29:15
+      1  100.0%          JS: ~for /home/user/projects/retention-app/node_modules/@sap/cds/lib/env/cds-env.js:17:7
+      1  100.0%            JS: ~get env /home/user/projects/retention-app/node_modules/@sap/cds/lib/index.js:37:10
+
+      9    1.4%  std::basic_ostream<char, std::char_traits<char> >& std::__ostream_insert<char, std::char_traits<char> >(std::basic_ostream<char, std::char_traits<char> >&, char const*, long)@@GLIBCXX_3.4.9
+      1   11.1%    JS: ~wasm_on_status node:internal/deps/undici/undici:5977:27
+      1  100.0%      JS: wasm-to-js:iii:i
+      1  100.0%        JS: wasm-function[38]
+      1  100.0%          JS: wasm-function[20]
+      1  100.0%            JS: ~execute node:internal/deps/undici/undici:6102:14
+      1   11.1%    JS: ~value node:internal/console/constructor:338:20
+      1  100.0%      JS: ~log node:internal/console/constructor:377:6
+      1  100.0%        JS: ~log /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:110:15
+      1  100.0%          JS: ~watch /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/watch.js:103:22
+      1  100.0%            JS: ~exec /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/bin/cds.js:30:14
+      1   11.1%    JS: ~tryPackage node:internal/modules/cjs/loader:476:20
+      1  100.0%      JS: ^Module._findPath node:internal/modules/cjs/loader:663:28
+      1  100.0%        JS: ^Module._resolveFilename node:internal/modules/cjs/loader:1126:35
+      1  100.0%          JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+      1  100.0%            JS: ^Module.require node:internal/modules/cjs/loader:1281:36
+      1   11.1%    JS: ~setSourceMapsEnabled node:internal/source_map/source_map_cache:56:30
+      1  100.0%      JS: ~initializeSourceMapsHandlers node:internal/process/pre_execution:718:38
+      1  100.0%        JS: ~prepareExecution node:internal/process/pre_execution:96:26
+      1  100.0%          JS: ~prepareMainThreadExecution node:internal/process/pre_execution:52:36
+      1  100.0%            JS: ~<anonymous> node:internal/main/run_main_module:1:1
+      1   11.1%    JS: ~livereloadURL /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/livereload-server.js:147:29
+      1  100.0%      JS: ~listening /extbin/globals/bun/global/install/node_modules/@sap/cds-dk/lib/watch/livereload-server.js:24:25
+      1  100.0%        JS: ~onceWrapper node:events:633:21
+      1  100.0%          JS: ~emitListeningNT node:net:1948:25
+      1  100.0%            JS: ~processTicksAndRejections node:internal/process/task_queues:67:35
+      1   11.1%    JS: ~exports.compileTrust /extbin/globals/bun/global/install/node_modules/express/lib/utils.js:194:32
+      1  100.0%      JS: ~set /extbin/globals/bun/global/install/node_modules/express/lib/application.js:351:23
+      1  100.0%        JS: ~defaultConfiguration /extbin/globals/bun/global/install/node_modules/express/lib/application.js:90:57
+      1  100.0%          JS: ~init /extbin/globals/bun/global/install/node_modules/express/lib/application.js:59:25
+      1  100.0%            JS: ~createApplication /extbin/globals/bun/global/install/node_modules/express/lib/express.js:36:27
+      1   11.1%    JS: ~assertEncoding node:internal/fs/utils:155:24
+      1  100.0%      JS: ~getOptions node:internal/fs/utils:321:20
+      1  100.0%        JS: ~readFileSync node:fs:441:22
+      1  100.0%          JS: ~loadSource node:internal/modules/cjs/loader:1536:20
+      1  100.0%            JS: ~Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      1   11.1%    JS: ~<anonymous> /extbin/globals/bun/global/install/node_modules/content-disposition/index.js:1:1
+      1  100.0%      JS: ^Module._compile node:internal/modules/cjs/loader:1483:37
+      1  100.0%        JS: ^Module._extensions..js node:internal/modules/cjs/loader:1604:37
+      1  100.0%          JS: ^Module.load node:internal/modules/cjs/loader:1257:33
+      1  100.0%            JS: ^Module._load node:internal/modules/cjs/loader:1003:24
+      1   11.1%    JS: ^__require node:internal/deps/undici/undici:5:49
+      1  100.0%      JS: ~lib/web/websocket/websocket.js node:internal/deps/undici/undici:12813:35
+      1  100.0%        JS: ^__require node:internal/deps/undici/undici:5:49
+      1  100.0%          JS: ~<anonymous> node:internal/deps/undici/undici:1:1
+      1  100.0%            JS: ^compileForInternalLoader node:internal/bootstrap/realm:383:27
+
