@@ -211,35 +211,18 @@ sap.ui.define([
         // tracking - this correctly reflects submitted claims even
         // after a page refresh or in a brand new browser session.
         _recomputeKpiCounts: function () {
-            const results = this._aAllResults || [];
-            const oClaimMap = this._oClaimMap || {};
-
-            const aSubmittedRefundRecords = results.filter(
-                r => r.FinalStatus === "Due for Refund" && oClaimMap[r.Invoicenumber]
-            );
-
-            const kpiModel = new JSONModel({
-                AllCount: results.length,
-                RetainedCount: results.filter(r => r.FinalStatus === "Retained").length,
-                // "Due for Refund" count now EXCLUDES any record that
-                // has a persisted claim - it has effectively moved to
-                // "Request In Progress" instead.
-                RefundCount: results.filter(
-                    r => r.FinalStatus === "Due for Refund" && !oClaimMap[r.Invoicenumber]
-                ).length,
-                // "Request In Progress" count includes both records
-                // whose FinalStatus genuinely is that already (from
-                // the backend), AND any "Due for Refund" record that
-                // has a persisted claim.
-                ProgressCount: results.filter(r => r.FinalStatus === "Request In Progress").length
-                    + aSubmittedRefundRecords.length,
-                ApprovedCount: results.filter(r => r.FinalStatus === "Approved").length,
-                RejectedCount: results.filter(r => r.FinalStatus === "Rejected").length,
-                PaidCount: results.filter(r => r.FinalStatus === "Paid").length
-            });
-            this.getView().setModel(kpiModel, "kpi");
-        },
-
+    const results = this._aAllResults || [];
+    const kpiModel = new JSONModel({
+        AllCount: results.length,
+        RetainedCount: results.filter(r => r.FinalStatus === "RETAINED").length,
+        RefundCount: results.filter(r => r.FinalStatus === "RETENTION_DUE").length,
+        ProgressCount: results.filter(r => r.FinalStatus === "REQUEST_IN_PROGRESS").length,
+        ApprovedCount: results.filter(r => r.FinalStatus === "REQUEST_ACCEPTED").length,
+        RejectedCount: results.filter(r => r.FinalStatus === "REQUEST_REJECTED").length,
+        PaidCount: results.filter(r => r.FinalStatus === "PAID").length
+    });
+    this.getView().setModel(kpiModel, "kpi");
+},
         // ---------------------------------------------------------
         // KPI Tile Press -> Filter Table
         // ---------------------------------------------------------
@@ -250,55 +233,24 @@ sap.ui.define([
             let aFiltered;
 
             switch (tileHeader) {
-                case "Retained":
-                    aFiltered = aAllResults.filter(r => r.FinalStatus === "Retained");
-                    break;
-
-                case "Due for Refund":
-                    // FIXED 2026-06-29: excludes any record that has
-                    // a persisted claim (oClaimMap) - those display
-                    // as "Request In Progress" instead (see the case
-                    // above), same exclusion already used in
-                    // _recomputeKpiCounts's RefundCount calculation,
-                    // so this tile's filtered table matches its own
-                    // tile count exactly.
-                    aFiltered = aAllResults.filter(
-                        r => r.FinalStatus === "Due for Refund" && !(this._oClaimMap && this._oClaimMap[r.Invoicenumber])
-                    );
-                    break;
-
-                case "Request In Progress":
-                    // FIXED 2026-06-29: "Request In Progress" is a
-                    // display-only override (see formatStatusText) -
-                    // a record's REAL backend FinalStatus stays "Due
-                    // for Refund" even after a claim is submitted for
-                    // it (that status is purely date-driven and
-                    // doesn't change on its own - confirmed business
-                    // rule from earlier this session). Filtering on
-                    // the raw FinalStatus value "Request In Progress"
-                    // matched nothing, since no record's real
-                    // FinalStatus is ever literally that string -
-                    // this needs the exact same condition already
-                    // used by _recomputeKpiCounts/formatStatusText:
-                    // real status is "Due for Refund" AND the record
-                    // has a persisted claim in this._oClaimMap.
-                    aFiltered = aAllResults.filter(
-                        r => r.FinalStatus === "Due for Refund" && this._oClaimMap && this._oClaimMap[r.Invoicenumber]
-                    );
-                    break;
-
-                case "Approved":
-                    aFiltered = aAllResults.filter(r => r.FinalStatus === "Approved");
-                    break;
-
-                case "Rejected":
-                    aFiltered = aAllResults.filter(r => r.FinalStatus === "Rejected");
-                    break;
-
-                case "Paid":
-                    aFiltered = aAllResults.filter(r => r.FinalStatus === "Paid");
-                    break;
-
+               case "Retained":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "RETAINED");
+    break;
+case "Due for Refund":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "RETENTION_DUE");
+    break;
+case "Request In Progress":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "REQUEST_IN_PROGRESS");
+    break;
+case "Approved":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "REQUEST_ACCEPTED");
+    break;
+case "Rejected":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "REQUEST_REJECTED");
+    break;
+case "Paid":
+    aFiltered = aAllResults.filter(r => r.FinalStatus === "PAID");
+    break;
                 case "All":
                 default:
                     aFiltered = aAllResults;
@@ -532,39 +484,38 @@ sap.ui.define([
         // logic this replaced (kept identical, just moved into JS so
         // it can consult data the XML binding couldn't reach).
         formatStatusText: function (sFinalStatus, sInvoicenumber) {
-            if (this._oClaimMap && this._oClaimMap[sInvoicenumber]) {
-                return "Request In Progress";
-            }
-            return sFinalStatus;
-        },
+    switch (sFinalStatus) {
+        case "PAID": return "Paid";
+        case "RETAINED": return "Retained";
+        case "RETENTION_DUE": return "Due for Refund";
+        case "REQUEST_IN_PROGRESS": return "Request In Progress";
+        case "REQUEST_ACCEPTED": return "Request Approved";
+        case "REQUEST_REJECTED": return "Rejected";
+        default: return sFinalStatus;
+    }
+},
 
-        formatStatusState: function (sFinalStatus, sInvoicenumber) {
-            if (this._oClaimMap && this._oClaimMap[sInvoicenumber]) {
-                return "Information";
-            }
-            switch (sFinalStatus) {
-                case "Approved":
-                case "Paid":
-                case "Retained":
-                    return "Success";
-                case "Rejected":
-                    return "Error";
-                case "Due for Refund":
-                    return "Warning";
-                case "Request In Progress":
-                    return "Information";
-                default:
-                    return "None";
-            }
-        },
-
-        formatRowSelectable: function (sFinalStatus, sInvoicenumber) {
-  // Retained status — not yet eligible for claim
-  if (sFinalStatus === "Retained") {
+formatStatusState: function (sFinalStatus, sInvoicenumber) {
+    switch (sFinalStatus) {
+        case "PAID":
+        case "REQUEST_ACCEPTED":
+        case "RETAINED":
+            return "Success";
+        case "REQUEST_REJECTED":
+            return "Error";
+        case "RETENTION_DUE":
+            return "Warning";
+        case "REQUEST_IN_PROGRESS":
+            return "Information";
+        default:
+            return "None";
+    }
+},
+formatRowSelectable: function (sFinalStatus, sInvoicenumber) {
+  if (sFinalStatus === "RETAINED") {
     return "Inactive";
   }
-  // Already claimed — prevent duplicate claim
-  if (this._oClaimMap && this._oClaimMap[sInvoicenumber] && sFinalStatus === "Due for Refund") {
+  if (sFinalStatus === "REQUEST_IN_PROGRESS" || sFinalStatus === "REQUEST_ACCEPTED" || sFinalStatus === "REQUEST_REJECTED" || sFinalStatus === "PAID") {
     return "Inactive";
   }
   return "Active";

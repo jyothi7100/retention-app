@@ -16,24 +16,15 @@
     {
       "name": "Token_Exchange",
       "description": "UAA",
-      "scope-references": [
-        "uaa.user"
-      ]
+      "scope-references": ["uaa.user"]
     },
     {
-      "name": "SupplierRole",
+      "name": "SupplierRoleV2",
       "description": "Dynamically filters data by ANID",
-      "scope-references": [
-        "$XSAPPNAME.SupplierUser"
-      ],
-      "attribute-references": [
-        {
-          "name": "anid",
-          "default-values": ["*"]
-        }
-      ]
+      "scope-references": ["$XSAPPNAME.SupplierUser"],
+      "attribute-references": ["anid"]
     }
-  ],
+],
   "attributes": [
   {
     "name": "anid",

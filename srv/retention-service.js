@@ -4,81 +4,67 @@ const cds = require("@sap/cds");
 const xml2js = require("xml2js");
 
 /**
- * Derives the business-facing FinalStatus (tile name) from the raw
- * S/4 fields, per the rules confirmed with the functional team
- * (spreadsheet shared 2026-06-22):
+ * Derives the business-facing FinalStatus from the raw S/4 fields.
  *
- *   RETAINED  : Netduedate < today  AND Rtcleardocument not created
- *   PAID      : Rtcleardocument has a value
- *   APPROVED  : Rtcleardocument has a value AND Paydocument is initial/empty
- *               (the "24*" field referenced in the spec - confirmed
- *               2026-06-22 to be Paydocument, since real sample data
- *               showed Paydocument values like '24000684')
- *   DUE       : Netduedate > today  AND Rtcleardocument not created
- *   INPROGRESS: has Workflow ID, workflow status = started,   level is 1 or 2
- *   REJECTED  : has Workflow ID, workflow status = completed, level is 1 or 2
- *
- * IMPORTANT: APPROVED and PAID overlap - APPROVED is a more specific
- * case of PAID. APPROVED must be checked BEFORE PAID.
- *
- * STILL OPEN / PLACEHOLDER:
- *   1. The exact field name for workflow "level" - guessed as `Level`.
- *   2. Whether Docstatus doubles as the workflow status field.
+ * CHANGED 2026-07-16: previously this function computed FinalStatus
+ * itself from a combination of Netduedate, Rtcleardocument,
+ * Paydocument, Workflow, and a guessed "Level" field (per the
+ * 2026-06-22 spreadsheet) - that logic is REMOVED. Real sample data
+ * confirmed 2026-07-16 that S/4 (via ZMM_RETENTION_LIST_SRV) already
+ * computes and returns the correct business status directly in
+ * d:Docstatus, using exactly these values: PAID, RETAINED,
+ * RETENTION_DUE, REQUEST_IN_PROGRESS, REQUEST_ACCEPTED,
+ * REQUEST_REJECTED. There is nothing left to derive - this function
+ * is now a pure passthrough. The frontend (retention.controller.js)
+ * maps these raw values to their display text/state/KPI groupings.
  */
 function deriveStatus(p) {
-  const rtClearDoc = (p["d:Rtcleardocument"] || "").trim();
-  const payDoc = (p["d:Paydocument"] || "").trim();
-  const wf = (p["d:Workflow"] || "").trim();
-  const wfStatus = p["d:Docstatus"];
-  const wfLevel = p["d:Level"];
-
-  const hasClearDoc = rtClearDoc !== "" && rtClearDoc !== "0";
-  const hasPayDoc = payDoc !== "" && payDoc !== "0";
-  const hasActiveWorkflow = wf !== "" && wf !== "000000000000";
-  const levelIsOneOrTwo = wfLevel === "1" || wfLevel === "2";
-
-  const netDueDateRaw = p["d:Netduedate"];
-  const dueDate = netDueDateRaw ? new Date(netDueDateRaw) : null;
-  const today = new Date();
-
-  if (hasActiveWorkflow && wfStatus === "STARTED" && levelIsOneOrTwo) {
-    return "Request In Progress";
-  }
-  if (hasActiveWorkflow && wfStatus === "COMPLETED" && levelIsOneOrTwo) {
-    return "Rejected";
-  }
-  if (hasClearDoc && !hasPayDoc) {
-    return "Approved";
-  }
-  if (hasClearDoc) {
-    return "Paid";
-  }
-  if (!hasClearDoc && dueDate && dueDate < today) {
-    return "Due for Refund";
-  }
-  if (!hasClearDoc && dueDate && dueDate >= today) {
-    return "Retained";
-  }
-
-  return "Retained";
+  return p["d:Docstatus"] || "";
 }
-
 module.exports = cds.service.impl(async function () {
   const { RetentionList } = this.entities;
 
   this.on("READ", RetentionList, async (req) => {
-    const supplier = req.data.Supplier || "0000100840";
-    const fiscal = req.data.Fiscalyear || "2026";
+    // CHANGED 2026-07-15 — was filtering by hardcoded Supplier
+    // ("0000100840") and Fiscalyear ("2026") defaults. Now filters by
+    // the logged-in user's ANID instead (confirmed via Postman:
+    // endpoint takes client/skip/top/Anid, no Fiscalyear param at
+    // all) - each supplier user now only sees their own retention
+    // records via req.user.attr.anid, same value already used
+    // elsewhere in this file (whoAmI, submitClaimWithAttachments's
+    // <d:Anid> field).
+    // const anid = req.user?.attr?.anid || "";
+    const anid ="AN11223415875-T";
+
+    if (!anid) {
+        return req.reject(403, "No ANID found for the logged-in user - cannot retrieve retention records");
+    }
 
     const dest = await cds.connect.to("CPI_RETENTION");
 
     const path =
       `/http/retention/list` +
-      `?client=100&Supplier=${supplier}&Fiscalyear=${fiscal}&skip=0&top=100`;
+      `?client=100&skip=0&top=100&Anid=${anid}`;
 
     const response = await dest.send("GET", path, {
       headers: { "Accept": "application/xml" }
     });
+
+
+
+  // this.on("READ", RetentionList, async (req) => {
+  //   const supplier = req.data.Supplier || "0000100840";
+  //   const fiscal = req.data.Fiscalyear || "2026";
+
+  //   const dest = await cds.connect.to("CPI_RETENTION");
+
+  //   const path =
+  //     `/http/retention/list` +
+  //     `?client=100&Supplier=${supplier}&Fiscalyear=${fiscal}&skip=0&top=100`;
+
+  //   const response = await dest.send("GET", path, {
+  //     headers: { "Accept": "application/xml" }
+  //   });
 
     const xml = response;
 
@@ -143,7 +129,16 @@ if (p["d:Rtcleardocument"] || p["d:Paydocument"] || p["d:Workflow"]) {
   // roles, so the UI can display "Logged in as: ..." on the page.
   // ---------------------------------------------------------------
   this.on("whoAmI", (req) => {
-  const aKnownRoles = ["SupplierRole", "authenticated-user", "any"];
+  // TEMPORARY DEBUG
+  try {
+    const oRawToken = req.user?.tokenInfo?.getPayload?.() || req.user?.authInfo?.token || null;
+    console.log (JSON.stringify(req.user, null, 2));
+    console.log("=== whoAmI RAW TOKEN PAYLOAD ===", JSON.stringify(oRawToken, null, 2));
+  } catch (e) {
+    console.log("=== whoAmI RAW TOKEN DEBUG ERROR ===", e.message);
+  }
+
+  const aKnownRoles = ["SupplierUser", "authenticated-user", "any"];
   const aActiveRoles = aKnownRoles.filter(r => req.user?.is?.(r));
 
   return {
