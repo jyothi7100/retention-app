@@ -34,7 +34,9 @@ module.exports = cds.service.impl(async function () {
     // elsewhere in this file (whoAmI, submitClaimWithAttachments's
     // <d:Anid> field).
     // const anid = req.user?.attr?.anid || "";
-    const anid ="AN11223415875-T";
+   // const anid ="AN11223415875-T";
+    const oPayload = req.user?.tokenInfo?.getPayload?.() || {};
+    const anid = oPayload["family_name"] || "";
 
     if (!anid) {
         return req.reject(403, "No ANID found for the logged-in user - cannot retrieve retention records");
@@ -137,13 +139,14 @@ if (p["d:Rtcleardocument"] || p["d:Paydocument"] || p["d:Workflow"]) {
   } catch (e) {
     console.log("=== whoAmI RAW TOKEN DEBUG ERROR ===", e.message);
   }
-
+   const oPayload = req.user?.tokenInfo?.getPayload?.() || {};
+  const anid = oPayload["family_name"] || "";
   const aKnownRoles = ["SupplierUser", "authenticated-user", "any"];
   const aActiveRoles = aKnownRoles.filter(r => req.user?.is?.(r));
 
   return {
     id: req.user?.id || "",
-    anid: req.user?.attr?.anid || "",
+    anid: anid,
     roles: aActiveRoles.join(", ")
   };
 });
@@ -264,8 +267,8 @@ this.on("submitAttachment", async (req) => {
   }
 
   const sPurchaseorder = records[0].Purchaseorder;
-  const sAnid = req.user?.attr?.anid || "";
-
+ const oPayload = req.user?.tokenInfo?.getPayload?.() || {};
+const sAnid = oPayload["family_name"] || "";
   console.log("=== submitClaimWithAttachments: sending", records.length, "records for PO", sPurchaseorder);
 
   // Build inline ListSet entries for all records

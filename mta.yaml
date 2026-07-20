@@ -151,7 +151,7 @@ resources:
         - binding-secret
         - x509
       tenant-mode: dedicated
-      xsappname: retention-app-${org}-${space}
+      xsappname: retention-app-EWE-ARIBA-T
     path: ./xs-security.json
     service: xsuaa
     service-name: retention-app-xsuaa-service

@@ -12,6 +12,20 @@
       "description": "Supplier Access"
     }
   ],
+  "attributes": [
+    {
+      "name": "anid",
+      "description": "Ariba Network ID",
+      "valueType": "string",
+      "valueRequired": false
+    },
+     {
+      "name": "anid1",
+      "description": "Ariba Network ID (test)",
+      "valueType": "string",
+      "valueRequired": false
+    }
+  ],
   "role-templates": [
     {
       "name": "Token_Exchange",
@@ -19,20 +33,20 @@
       "scope-references": ["uaa.user"]
     },
     {
-      "name": "SupplierRoleV2",
-      "description": "Dynamically filters data by ANID",
-      "scope-references": ["$XSAPPNAME.SupplierUser"],
-      "attribute-references": ["anid"]
-    }
-],
-  "attributes": [
-  {
-    "name": "anid",
-    "description": "Ariba Network ID",
-    "valueType": "string",
-    "valueRequired": false
-  }
-],
+      "name": "SupplierRoleV1",
+      "description": "Supplier access scope",
+      "scope-references": ["$XSAPPNAME.SupplierUser"]
+    },
+    {
+  "name": "UserAttributes",
+  "description": "Get User Attributes (ANID)",
+  "scope-references": ["uaa.user"],
+  "attribute-references": ["anid", "anid1"]
+}
+  ],
+  "foreign-scope-references": [
+    "user_attributes"
+  ],
   "oauth2-configuration": {
     "redirect-uris": [
       "https://*.us10-001.hana.ondemand.com/**",
