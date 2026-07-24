@@ -46,7 +46,7 @@ module.exports = cds.service.impl(async function () {
 
     const path =
       `/http/retention/list` +
-      `?client=100&skip=0&top=100&Anid=${anid}`;
+      `?client=100&skip=0&top=500&Anid=${anid}`;
 
     const response = await dest.send("GET", path, {
       headers: { "Accept": "application/xml" }

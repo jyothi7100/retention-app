@@ -87,12 +87,21 @@ sap.ui.define([
         // page refresh. Both fetches happen in parallel via
         // Promise.all, since they're independent of each other.
         _loadRetentionData: async function () {
-            const oModel = this.getOwnerComponent().getModel();
+    const oModel = this.getOwnerComponent().getModel();
 
-            const [aRetentionContexts, aClaimContexts] = await Promise.all([
-                oModel.bindList("/RetentionList").requestContexts(),
-                oModel.bindList("/ClaimRecords").requestContexts()
-            ]);
+    // CHANGED 2026-07-24 — requestContexts() with no arguments
+    // defaults to fetching only the first 100 rows (iStart=0,
+    // iLength=100), regardless of how many records the backend/CPI
+    // actually returns. Confirmed via direct Postman testing: CPI
+    // returns 500+ real records for a large supplier, but the
+    // dashboard was silently capped at 100 because of this UI5
+    // default alone - not a CPI or backend limit. Passing an
+    // explicit large length fetches everything.
+    const [aRetentionContexts, aClaimContexts] = await Promise.all([
+        oModel.bindList("/RetentionList").requestContexts(0, 10000),
+        oModel.bindList("/ClaimRecords").requestContexts(0, 10000)
+    ]);
+
 
             // Stored on the controller (not just used locally) so
             // _recomputeKpiCounts can rebuild the KPI tile counts
@@ -227,7 +236,7 @@ sap.ui.define([
         // KPI Tile Press -> Filter Table
         // ---------------------------------------------------------
        onTilePress: function (oEvent) {
-            const tileHeader = oEvent.getSource().getHeader();
+            const tileHeader = (oEvent.getSource().getHeader() || "").trim();
             const aAllResults = this._aAllResults || [];
 
             let aFiltered;
@@ -242,7 +251,7 @@ case "Due for Refund":
 case "Request In Progress":
     aFiltered = aAllResults.filter(r => r.FinalStatus === "REQUEST_IN_PROGRESS");
     break;
-case "Approved":
+case "Request Approved":
     aFiltered = aAllResults.filter(r => r.FinalStatus === "REQUEST_ACCEPTED");
     break;
 case "Rejected":

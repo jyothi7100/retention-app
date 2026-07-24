@@ -5,11 +5,13 @@ service RetentionService {
 
   entity RetentionList {
     key Invoicenumber     : String;
-    Invoiceyear           : String;
+    key Invoiceyear       : String;
+    key Companycode       : String;
+    key Purchaseorder     : String;
     Invoicedate           : DateTime;
     Accountingdocument    : String;
     Fiscalyear             : String;
-    Companycode            : String;
+    
     Rtclearingyear         : String;
     Rtclearing             : String;
     Rtcreationdate          : DateTime;
@@ -19,7 +21,7 @@ service RetentionService {
     Docstatus               : String;
     Suppliername            : String;
     Supplier                : String;
-    Purchaseorder           : String;
+    
     Netduedate              : DateTime;
     Externalref             : String;
     Invoicedescription      : String;
