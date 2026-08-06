@@ -151,7 +151,7 @@ resources:
         - binding-secret
         - x509
       tenant-mode: dedicated
-      xsappname: retention-app-EWE-ARIBA-T
+      xsappname: retention-app-EWE-PROD-ARIBA
     path: ./xs-security.json
     service: xsuaa
     service-name: retention-app-xsuaa-service
@@ -162,7 +162,7 @@ resources:
 - name: retention-app-malware-scanner
   type: org.cloudfoundry.existing-service
   parameters:
-    service-name: ARIBA-T_Malware Scanning Service
+    service-name: ARIBA_Malware Scanning Service
 
 parameters:
   deploy_mode: html5-repo

@@ -19,4 +19,5 @@ mta_archives/
 @cds-models
 
 # auto generated wildcard
-db/.env
+db/.env*.dev-backup
+Makefile_*.mta
